@@ -9,17 +9,6 @@ from app.templating import templates
 
 router = APIRouter(prefix="/settings")
 
-_SB_CATEGORIES = [
-    ("sponsor",        "Sponsor"),
-    ("selfpromo",      "Self-promo"),
-    ("interaction",    "Interaction"),
-    ("intro",          "Intro"),
-    ("outro",          "Outro"),
-    ("preview",        "Preview"),
-    ("music_offtopic", "Non-music"),
-    ("filler",         "Filler"),
-]
-
 
 @router.get("")
 async def settings_page(request: Request):
@@ -32,13 +21,11 @@ async def settings_page(request: Request):
         channel_size = subs.get("channel_size", 50) or 50
         shorts_size  = subs.get("shorts_channel_size", 0) or 0
         live_size    = subs.get("live_channel_size", 0) or 0
-        sb_categories = dl.get("sb_categories") or []
     except Exception:
         dl = {}
         channel_size = 50
         shorts_size  = 0
         live_size    = 0
-        sb_categories = []
 
     try:
         task_results = await ta.get_task_status("update_subscribed")
@@ -64,8 +51,6 @@ async def settings_page(request: Request):
             "channel_size": channel_size,
             "shorts_size":  shorts_size,
             "live_size":    live_size,
-            "sb_categories": sb_categories,
-            "sb_all_categories": _SB_CATEGORIES,
             "dl": dl,
         },
     )
@@ -174,7 +159,6 @@ async def save_subscription_sizes(
 async def save_downloads(
     request: Request,
     integrate_sponsorblock: str = Form("false"),
-    sb_categories: list[str] = Form(default=[]),
     autodelete_days: str = Form(""),
     subtitle: str = Form(""),
     subtitle_source: str = Form(""),
@@ -203,7 +187,6 @@ async def save_downloads(
     payload = {
         "downloads": {
             "integrate_sponsorblock": _bool(integrate_sponsorblock),
-            "sb_categories": sb_categories,
             "autodelete_days": _int(autodelete_days),
             "subtitle": _str(subtitle),
             "subtitle_source": _str(subtitle_source),

@@ -137,22 +137,6 @@
                             </div>
                             {{ toggle("integrate_sponsorblock", dl.integrate_sponsorblock) }}
                         </div>
-                        <div>
-                            <p class="text-xs mb-2" style="color:var(--c-text4)">Segment categories to fetch</p>
-                            <div style="display:flex;flex-wrap:wrap;gap:0.4rem">
-                                {% for val, label in sb_all_categories %}
-                                <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.7rem;
-                                              padding:0.25rem 0.55rem;border-radius:999px;cursor:pointer;
-                                              border:1px solid var(--c-border);background-color:var(--c-surface2);
-                                              color:var(--c-text2)">
-                                    <input type="checkbox" name="sb_categories" value="{{ val }}"
-                                           {% if val in sb_categories %}checked{% endif %}
-                                           style="width:11px;height:11px;accent-color:var(--c-accent);cursor:pointer">
-                                    {{ label }}
-                                </label>
-                                {% endfor %}
-                            </div>
-                        </div>
                     </div>
 
                     <!-- Auto-delete watched -->
