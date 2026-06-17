@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Channels — YouTube Withdrawal{% endblock %}
+
+{% block content %}
+<div class="p-8">
+
+    <!-- Header -->
+    <div class="flex items-end justify-between mb-8" style="border-bottom:1px solid var(--c-border);padding-bottom:1.5rem">
+        <div>
+            <h1 class="text-2xl text-white" style="letter-spacing:-0.01em">Channels</h1>
+            <p class="text-gray-500 mt-1" style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase">Your subscriptions</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <select onchange="window.location.href='/channels?sort='+this.value"
+                    class="text-sm rounded px-3 py-2 border cursor-pointer"
+                    style="background-color:var(--c-surface2);color:var(--c-text);border-color:var(--c-border);font-size:0.65rem;letter-spacing:0.05em;text-transform:uppercase;font-family:system-ui,sans-serif">
+                {% for value, label in sort_options.items() %}
+                <option value="{{ value }}" {% if value == current_sort %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <button onclick="document.getElementById('add-channel-panel').classList.toggle('hidden')"
+                    class="btn-outline flex items-center gap-2">
+                <svg style="width:11px;height:11px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Add Channel
+            </button>
+        </div>
+    </div>
+
+    <!-- Add channel panel -->
+    <div id="add-channel-panel" class="hidden mb-8 p-5 bg-gray-800 rounded-lg border border-gray-700">
+        <p class="text-gray-400 mb-3" style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase">Find a channel</p>
+        <form hx-post="/channels/search"
+              hx-target="#channel-search-result"
+              hx-swap="innerHTML"
+              hx-indicator="#search-spinner"
+              class="flex gap-3">
+            <input type="text"
+                   name="url"
+                   placeholder="@handle or youtube.com/channel/…"
+                   autocomplete="off"
+                   style="flex:1;background-color:var(--c-surface2);color:var(--c-text);font-size:0.8rem;border-radius:0.25rem;padding:0.5rem 0.875rem;border:1px solid var(--c-border);outline:none;font-family:system-ui,sans-serif"
+                   onfocus="this.style.borderColor='var(--c-accent)'"
+                   onblur="this.style.borderColor='var(--c-border)'">
+            <button type="submit" class="btn-outline shrink-0 flex items-center gap-2">
+                <span id="search-spinner" class="htmx-indicator" style="font-size:0.6rem">Searching…</span>
+                <span class="htmx-request:hidden">Search</span>
+            </button>
+        </form>
+        <div id="channel-search-result"></div>
+    </div>
+
+    {% if channels %}
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+        {% for channel in channels %}
+            {% include "partials/channel_card.html" %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="flex flex-col items-center justify-center mt-24 text-center">
+        <p class="text-gray-400" style="font-family:Georgia,'Times New Roman',serif;font-size:1.1rem">No subscribed channels yet</p>
+        <p class="text-gray-500 mt-2" style="font-size:0.75rem">Add a channel above or subscribe in TubeArchivist.</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

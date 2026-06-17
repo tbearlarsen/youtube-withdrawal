@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}YouTube Withdrawal{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/static/htmx.min.js"></script>
+
+    <!-- Apply saved theme + sidebar state before paint to avoid flash -->
+    <script>
+        (function () {
+            var t = localStorage.getItem('yw-theme') || 'system';
+            var resolved = t === 'system'
+                ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                : t;
+            document.documentElement.setAttribute('data-theme', resolved);
+            var c = localStorage.getItem('yw-sidebar') || 'open';
+            document.documentElement.setAttribute('data-sidebar', c);
+        })();
+    </script>
+
+    <style>
+        .htmx-indicator { display: none; }
+        .htmx-request .htmx-indicator { display: inline; }
+        .htmx-request.htmx-indicator { display: inline; }
+
+        /* ── Typography ─────────────────────────────────────────── */
+        h1, h2, h3, h4 {
+            font-family: Georgia, 'Times New Roman', serif;
+            font-weight: 400;
+        }
+
+        /* ── Sidebar transition ──────────────────────────────────── */
+        #sidebar { transition: width 200ms ease; }
+        #sidebar .sidebar-label { transition: opacity 150ms ease, width 150ms ease; }
+        #main-content { transition: margin-left 200ms ease; }
+
+        [data-sidebar="collapsed"] #sidebar { width: 3.5rem; }
+        [data-sidebar="collapsed"] #main-content { margin-left: 3.5rem; }
+        [data-sidebar="collapsed"] .sidebar-label { opacity: 0; width: 0; overflow: hidden; white-space: nowrap; }
+        [data-sidebar="collapsed"] #sidebar-logo-text { display: none; }
+
+        /* ── Light theme ─────────────────────────────────────────── */
+        [data-theme="light"] {
+            --c-bg:       #faf9f7;
+            --c-surface:  #ffffff;
+            --c-surface2: #f4f2ee;
+            --c-hover:    #ede9e2;
+            --c-border:   #ddd8d0;
+            --c-border2:  #ede9e2;
+            --c-text:     #2c2c2c;
+            --c-text2:    #5a5550;
+            --c-text3:    #8a8480;
+            --c-text4:    #aaa49e;
+            --c-accent:   #9b2030;
+            --c-accent-h: #7d1a28;
+            --c-pending:  #a07828;
+            --c-queued:   #3a7252;
+        }
+
+        /* ── Dark theme ──────────────────────────────────────────── */
+        [data-theme="dark"] {
+            --c-bg:       #1c1814;
+            --c-surface:  #252118;
+            --c-surface2: #302b23;
+            --c-hover:    #3a342c;
+            --c-border:   #3a342c;
+            --c-border2:  #252118;
+            --c-text:     #f0ece4;
+            --c-text2:    #d4cec4;
+            --c-text3:    #9a9288;
+            --c-text4:    #6a6460;
+            --c-accent:   #c44b4b;
+            --c-accent-h: #a83c3c;
+            --c-pending:  #c49a42;
+            --c-queued:   #5eab80;
+        }
+
+        /* ── Tailwind gray → theme variable mapping ──────────────── */
+        .bg-gray-900 { background-color: var(--c-bg)      !important; }
+        .bg-gray-800 { background-color: var(--c-surface)  !important; }
+        .bg-gray-700 { background-color: var(--c-surface2) !important; }
+        .bg-gray-600 { background-color: var(--c-hover)    !important; }
+
+        .hover\:bg-gray-700\/60:hover { background-color: color-mix(in srgb, var(--c-surface2) 60%, transparent) !important; }
+        .hover\:bg-gray-700:hover     { background-color: var(--c-surface2) !important; }
+        .hover\:bg-gray-600:hover     { background-color: var(--c-hover)    !important; }
+
+        .border-gray-700     { border-color: var(--c-border)  !important; }
+        .border-gray-700\/50 { border-color: color-mix(in srgb, var(--c-border) 50%, transparent) !important; }
+        .border-gray-800     { border-color: var(--c-border2) !important; }
+
+        .text-white    { color: var(--c-text)  !important; }
+        .text-gray-300 { color: var(--c-text2) !important; }
+        .text-gray-400 { color: var(--c-text3) !important; }
+        .text-gray-500 { color: var(--c-text4) !important; }
+        .text-gray-600 { color: var(--c-text4) !important; }
+
+        .divide-gray-800 > * + * { border-color: var(--c-border2) !important; }
+
+        /* ── Accent (was YouTube red) ────────────────────────────── */
+        .bg-red-600              { background-color: var(--c-accent)   !important; }
+        .hover\:bg-red-700:hover { background-color: var(--c-accent-h) !important; }
+        .text-red-400            { color: var(--c-accent) !important; }
+        .text-red-500            { color: var(--c-accent) !important; }
+        .border-red-500          { border-color: var(--c-accent) !important; }
+        .focus\:border-red-500:focus { border-color: var(--c-accent) !important; }
+        .hover\:border-red-500\/50:hover { border-color: color-mix(in srgb, var(--c-accent) 50%, transparent) !important; }
+        .hover\:shadow-red-900\/10:hover { --tw-shadow-color: color-mix(in srgb, var(--c-accent) 10%, transparent) !important; }
+
+        /* ── Status colours ──────────────────────────────────────── */
+        .text-yellow-500   { color: var(--c-pending) !important; }
+        .bg-yellow-500\/20 { background-color: color-mix(in srgb, var(--c-pending) 15%, transparent) !important; }
+        .bg-yellow-500\/30 { background-color: color-mix(in srgb, var(--c-pending) 25%, transparent) !important; }
+        .text-yellow-400   { color: var(--c-pending) !important; }
+        .text-green-400    { color: var(--c-queued)  !important; }
+        .bg-green-900\/20  { background-color: color-mix(in srgb, var(--c-queued) 12%, transparent) !important; }
+        .border-green-900\/40 { border-color: color-mix(in srgb, var(--c-queued) 30%, transparent) !important; }
+        .bg-green-400 { background-color: var(--c-queued) !important; }
+        .text-blue-400 { color: #5b8dd9 !important; }
+        [data-theme="dark"] .text-blue-400 { color: #7ba7e8 !important; }
+
+        /* ── Gradient banner ─────────────────────────────────────── */
+        .from-gray-800 { --tw-gradient-from: var(--c-surface)  !important; }
+        .to-gray-700   { --tw-gradient-to:   var(--c-surface2) !important; }
+        [data-theme="light"] .from-gray-900     { --tw-gradient-from: rgba(244,242,238,1)   !important; }
+        [data-theme="light"] .via-gray-900\/40  { --tw-gradient-via:  rgba(244,242,238,0.4) !important; }
+        [data-theme="dark"]  .from-gray-900     { --tw-gradient-from: rgba(28,24,20,1)      !important; }
+        [data-theme="dark"]  .via-gray-900\/40  { --tw-gradient-via:  rgba(28,24,20,0.4)    !important; }
+
+        /* ── Ring ────────────────────────────────────────────────── */
+        .ring-gray-900 { --tw-ring-color: var(--c-bg) !important; }
+
+        /* ── Always white (overlays) ─────────────────────────────── */
+        .text-fixed-white { color: #fff !important; }
+
+        /* ── Card shadows ────────────────────────────────────────── */
+        .video-card, .channel-card {
+            box-shadow: 0 1px 3px rgba(44,36,28,0.07), 0 1px 2px rgba(44,36,28,0.04);
+        }
+        [data-theme="dark"] .video-card,
+        [data-theme="dark"] .channel-card {
+            box-shadow: 0 2px 6px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        /* ── Button components ───────────────────────────────────── */
+        .btn-outline {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem;
+            padding: 0.375rem 0.75rem;
+            border: 1px solid var(--c-accent); color: var(--c-accent); background: transparent;
+            border-radius: 0.25rem;
+            font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500;
+            font-family: system-ui, sans-serif; cursor: pointer;
+            transition: background-color 150ms, color 150ms; text-decoration: none;
+        }
+        .btn-outline:hover { background-color: var(--c-accent); color: #fff; }
+
+        .btn-secondary {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem;
+            padding: 0.375rem 0.75rem;
+            border: 1px solid var(--c-border); color: var(--c-text3); background: transparent;
+            border-radius: 0.25rem;
+            font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500;
+            font-family: system-ui, sans-serif; cursor: pointer;
+            transition: border-color 150ms, color 150ms; text-decoration: none;
+        }
+        .btn-secondary:hover { border-color: var(--c-text3); color: var(--c-text); }
+
+        /* ── Status badge ────────────────────────────────────────── */
+        .status-badge {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            font-size: 0.6rem; letter-spacing: 0.09em; text-transform: uppercase;
+            font-weight: 500; font-family: system-ui, sans-serif;
+        }
+        .status-dot {
+            width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0;
+        }
+    </style>
+</head>
+<body class="h-full antialiased" style="background-color:var(--c-bg);color:var(--c-text)">
+<div class="flex h-full">
+
+    <!-- Sidebar -->
+    <nav id="sidebar" class="w-56 shrink-0 flex flex-col fixed inset-y-0 z-10"
+         style="background-color:var(--c-surface);border-right:1px solid var(--c-border)">
+
+        <!-- Logo + collapse toggle -->
+        <div class="px-4 py-4 flex items-center gap-3"
+             style="border-bottom:1px solid var(--c-border)">
+            <a href="/" class="flex items-center gap-3 flex-1 min-w-0">
+                <div class="shrink-0" style="color:var(--c-accent)">
+                    <svg viewBox="0 0 24 24" fill="currentColor" style="width:20px;height:20px">
+                        <path d="M23.5 6.19a3.02 3.02 0 00-2.12-2.14C19.52 3.5 12 3.5 12 3.5s-7.52 0-9.38.55A3.02 3.02 0 00.5 6.19C0 8.07 0 12 0 12s0 3.93.5 5.81a3.02 3.02 0 002.12 2.14C4.48 20.5 12 20.5 12 20.5s7.52 0 9.38-.55a3.02 3.02 0 002.12-2.14C24 15.93 24 12 24 12s0-3.93-.5-5.81zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/>
+                    </svg>
+                </div>
+                <div id="sidebar-logo-text" class="sidebar-label min-w-0">
+                    <p style="font-family:Georgia,'Times New Roman',serif;font-size:0.9rem;font-weight:500;color:var(--c-text);line-height:1">Withdrawal</p>
+                </div>
+            </a>
+            <button onclick="toggleSidebar()"
+                    class="shrink-0 p-1.5 rounded cursor-pointer transition-colors"
+                    style="color:var(--c-text4)" title="Toggle sidebar">
+                <svg id="sidebar-toggle-icon" style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Nav -->
+        <div class="flex-1 px-3 py-5 overflow-hidden" style="display:flex;flex-direction:column;gap:0.15rem">
+            <a href="/"
+               class="flex items-center gap-3 px-2.5 py-2 rounded transition-colors"
+               style="color:{% if active_page == 'home' %}var(--c-text){% else %}var(--c-text3){% endif %};{% if active_page == 'home' %}background-color:var(--c-hover){% endif %}"
+               title="Home">
+                <svg style="width:15px;height:15px;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                <span class="sidebar-label" style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;font-weight:500;font-family:system-ui,sans-serif">Home</span>
+            </a>
+            <a href="/channels"
+               class="flex items-center gap-3 px-2.5 py-2 rounded transition-colors"
+               style="color:{% if active_page == 'channels' %}var(--c-text){% else %}var(--c-text3){% endif %};{% if active_page == 'channels' %}background-color:var(--c-hover){% endif %}"
+               title="Channels">
+                <svg style="width:15px;height:15px;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                </svg>
+                <span class="sidebar-label" style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;font-weight:500;font-family:system-ui,sans-serif">Channels</span>
+                <span hx-get="/channels/pending-total" hx-trigger="load" hx-swap="outerHTML"
+                      class="sidebar-label ml-auto"></span>
+            </a>
+            <a href="/queue"
+               class="flex items-center gap-3 px-2.5 py-2 rounded transition-colors"
+               style="color:{% if active_page == 'queue' %}var(--c-text){% else %}var(--c-text3){% endif %};{% if active_page == 'queue' %}background-color:var(--c-hover){% endif %}"
+               title="Queue">
+                <svg style="width:15px;height:15px;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                <span class="sidebar-label" style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;font-weight:500;font-family:system-ui,sans-serif">Queue</span>
+            </a>
+            <a href="/downloads"
+               class="flex items-center gap-3 px-2.5 py-2 rounded transition-colors"
+               style="color:{% if active_page == 'downloads' %}var(--c-text){% else %}var(--c-text3){% endif %};{% if active_page == 'downloads' %}background-color:var(--c-hover){% endif %}"
+               title="Downloads">
+                <svg style="width:15px;height:15px;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2zm7 5v6m0 0l-3-3m3 3l3-3"/>
+                </svg>
+                <span class="sidebar-label" style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;font-weight:500;font-family:system-ui,sans-serif">Downloads</span>
+            </a>
+            <a href="/search"
+               class="flex items-center gap-3 px-2.5 py-2 rounded transition-colors"
+               style="color:{% if active_page == 'search' %}var(--c-text){% else %}var(--c-text3){% endif %};{% if active_page == 'search' %}background-color:var(--c-hover){% endif %}"
+               title="Search">
+                <svg style="width:15px;height:15px;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <span class="sidebar-label" style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;font-weight:500;font-family:system-ui,sans-serif">Search</span>
+            </a>
+        </div>
+
+        <!-- Footer: Settings -->
+        <div class="px-3 py-3" style="border-top:1px solid var(--c-border)">
+            <a href="/settings"
+               class="flex items-center gap-3 px-2.5 py-2 rounded transition-colors"
+               style="color:{% if active_page == 'settings' %}var(--c-text){% else %}var(--c-text3){% endif %};{% if active_page == 'settings' %}background-color:var(--c-hover){% endif %}"
+               title="Settings">
+                <svg style="width:15px;height:15px;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                <span class="sidebar-label" style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;font-weight:500;font-family:system-ui,sans-serif">Settings</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Page content -->
+    <main id="main-content" class="ml-56 flex-1 min-h-screen" style="background-color:var(--c-bg)">
+        {% block content %}{% endblock %}
+    </main>
+
+</div>
+
+<script>
+    function resolveTheme(t) {
+        return t === 'system'
+            ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+            : t;
+    }
+
+    function applyTheme(t) {
+        document.documentElement.setAttribute('data-theme', resolveTheme(t));
+    }
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+        if ((localStorage.getItem('yw-theme') || 'system') === 'system') {
+            applyTheme('system');
+        }
+    });
+
+    function applySidebar(state) {
+        document.documentElement.setAttribute('data-sidebar', state);
+        var icon = document.getElementById('sidebar-toggle-icon');
+        if (state === 'collapsed') {
+            icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>';
+        } else {
+            icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>';
+        }
+    }
+
+    function toggleSidebar() {
+        var current = document.documentElement.getAttribute('data-sidebar') || 'open';
+        var next = current === 'open' ? 'collapsed' : 'open';
+        localStorage.setItem('yw-sidebar', next);
+        applySidebar(next);
+    }
+
+    applyTheme(document.documentElement.getAttribute('data-theme') || 'dark');
+    applySidebar(document.documentElement.getAttribute('data-sidebar') || 'open');
+</script>
+</body>
+</html>

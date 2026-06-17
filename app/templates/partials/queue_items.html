@@ -1,0 +1,57 @@
+{% if videos %}
+<div class="divide-y divide-gray-800">
+    {% for video in videos %}
+    <div class="queue-item group flex items-center gap-4 py-4">
+
+        <!-- Thumbnail -->
+        <div class="shrink-0 w-32 rounded overflow-hidden bg-gray-700 relative">
+            <div class="aspect-video">
+                {% if video.vid_thumb_url %}
+                <img src="{{ video.vid_thumb_url | ta_thumb }}"
+                     class="w-full h-full object-cover" loading="lazy" alt="">
+                {% else %}
+                <div class="w-full h-full bg-gray-700"></div>
+                {% endif %}
+                {% if video.duration %}
+                <span class="absolute bottom-1 right-1 bg-black/75 text-fixed-white px-1 py-0.5 rounded leading-none"
+                      style="font-size:0.55rem;font-family:ui-monospace,monospace">{{ video.duration }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Info -->
+        <div class="flex-1 min-w-0">
+            <p class="text-white truncate" style="font-size:0.82rem;font-weight:500">{{ video.title | default('') }}</p>
+            <p class="text-gray-400 mt-0.5" style="font-size:0.65rem">
+                {{ video.channel_name | default('') }}
+                {% if video.published %}<span style="color:var(--c-border)"> · </span>{{ video.published | format_published }}{% endif %}
+            </p>
+        </div>
+
+        <!-- Status badge -->
+        <div class="shrink-0">
+            <span class="status-badge" style="color:var(--c-queued)">
+                <span class="status-dot"></span>Queued
+            </span>
+        </div>
+
+        <!-- Remove -->
+        <div class="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button hx-post="/queue/{{ video.youtube_id }}/remove"
+                    hx-target="closest .queue-item"
+                    hx-swap="outerHTML"
+                    class="btn-secondary">
+                Remove
+            </button>
+        </div>
+
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="flex flex-col items-center justify-center mt-20 text-center">
+    <p style="font-family:Georgia,'Times New Roman',serif;font-size:1.1rem;color:var(--c-text3)">Queue is empty</p>
+    <p class="mt-2" style="font-size:0.75rem;color:var(--c-text4)">Request videos from the Home or Channels tabs.</p>
+</div>
+{% endif %}

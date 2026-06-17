@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Home — YouTube Withdrawal{% endblock %}
+
+{% block content %}
+<div class="p-8 max-w-screen-2xl">
+
+    <!-- Header -->
+    <div class="flex items-end justify-between mb-8" style="border-bottom:1px solid var(--c-border);padding-bottom:1.5rem">
+        <div>
+            <h1 class="text-2xl text-white" style="letter-spacing:-0.01em">Home</h1>
+            <p class="text-gray-500 mt-1" style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase">Pending videos from your favorites</p>
+        </div>
+        {% if weekly_requests %}
+        <div class="text-right">
+            <p class="text-white" style="font-family:Georgia,'Times New Roman',serif;font-size:1.5rem;font-weight:400;line-height:1">{{ weekly_requests }}</p>
+            <p class="text-gray-500 mt-0.5" style="font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;font-family:system-ui,sans-serif">This week</p>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if no_favorites %}
+    <div class="flex flex-col items-center justify-center mt-24 text-center">
+        <p class="text-gray-400" style="font-family:Georgia,'Times New Roman',serif;font-size:1.1rem">No favorite channels yet</p>
+        <p class="text-gray-500 mt-2 max-w-xs" style="font-size:0.75rem;line-height:1.6">
+            Go to a channel and mark it as a Favorite to see its new videos here.
+        </p>
+        <a href="/channels" class="btn-outline mt-6">Browse Channels</a>
+    </div>
+
+    {% elif not videos %}
+    <div class="flex flex-col items-center justify-center mt-24 text-center">
+        <p class="text-gray-300" style="font-family:Georgia,'Times New Roman',serif;font-size:1.1rem">All caught up</p>
+        <p class="text-gray-500 mt-2" style="font-size:0.75rem">No pending videos from your favorite channels.</p>
+    </div>
+
+    {% else %}
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        {% for video in videos %}
+            {% set show_channel = true %}
+            {% include "partials/video_card.html" %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

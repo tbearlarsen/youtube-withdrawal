@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Queue — YouTube Withdrawal{% endblock %}
+
+{% block content %}
+<div class="p-8">
+
+    <!-- Header -->
+    <div class="mb-8" style="border-bottom:1px solid var(--c-border);padding-bottom:1.5rem">
+        <h1 class="text-2xl text-white" style="letter-spacing:-0.01em">Queue</h1>
+        <p class="text-gray-500 mt-1" style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase">
+            {% if total %}{{ total }} video{{ 's' if total != 1 }} pending{% else %}Nothing queued{% endif %}
+        </p>
+    </div>
+
+    <!-- Queue list — polled every 10s by HTMX -->
+    <div id="queue-list"
+         hx-get="/queue/items"
+         hx-trigger="every 10s"
+         hx-swap="innerHTML">
+        {% include "partials/queue_items.html" %}
+    </div>
+
+</div>
+{% endblock %}

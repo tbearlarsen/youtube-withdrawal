@@ -1,0 +1,247 @@
+"""
+functionality:
+- base class to make all calls to yt-dlp
+- handle yt-dlp errors
+"""
+
+from datetime import datetime
+from http import cookiejar
+from io import StringIO
+from os import path
+
+import yt_dlp
+from appsettings.src.config import AppConfig
+from common.src.env_settings import EnvironmentSettings
+from common.src.helper import deep_merge, rand_sleep
+from common.src.ta_redis import RedisArchivist
+from django.conf import settings
+
+
+class YtWrap:
+    """wrap calls to yt"""
+
+    BOT_MESSAGES = [
+        "not a bot",
+    ]
+    BOT_ERROR_LOG = "YouTube bot detection, abort!"
+
+    OBS_BASE = {
+        "default_search": "ytsearch",
+        "quiet": True,
+        "socket_timeout": 10,
+        "extractor_retries": 3,
+        "retries": 10,
+        "cachedir": path.abspath(
+            path.join(EnvironmentSettings.CACHE_DIR, "ytdlp")
+        ),
+        "plugin_dirs": [],
+    }
+
+    def __init__(self, obs_request, config=False):
+        self.obs_request = obs_request
+        self.config = config
+        self.build_obs()
+
+    def build_obs(self):
+        """build yt-dlp obs"""
+        self.obs = self.OBS_BASE.copy()
+        deep_merge(self.obs, self.obs_request)
+        if self.config:
+            self._add_cookie()
+            self._add_potoken_url()
+
+        if getattr(settings, "DEBUG", False):
+            del self.obs["quiet"]
+            print(self.obs)
+
+    def _add_cookie(self):
+        """add cookie if enabled"""
+        if self.config["downloads"]["cookie_import"]:
+            cookie_io = CookieHandler(self.config).get()
+        else:
+            cookie_io = CookieHandler(self.config).get("cookie_temp")
+
+        self.obs["cookiefile"] = cookie_io
+
+    def _add_potoken_url(self):
+        """add bgutils token url"""
+        if pot_provider_url := self.config["downloads"].get(
+            "pot_provider_url"
+        ):
+            deep_merge(
+                self.obs,
+                {
+                    "extractor_args": {
+                        "youtubepot-bgutilhttp": {
+                            "base_url": [pot_provider_url]
+                        }
+                    }
+                },
+            )
+            return
+
+        # from fork: https://github.com/bbilly1/bgutil-ytdlp-pot-provider
+        deep_merge(
+            self.obs,
+            {
+                "extractor_args": {
+                    "youtubepot-bgutilhttp": {"disable": ["True"]}
+                }
+            },
+        )
+
+    def download(self, url):
+        """make download request"""
+        self.obs.update({"check_formats": "selected"})
+        with yt_dlp.YoutubeDL(self.obs) as ydl:
+            try:
+                ydl.download([url])
+            except yt_dlp.utils.DownloadError as err:
+                print(f"{url}: failed to download with message {err}")
+                if "Temporary failure in name resolution" in str(err):
+                    raise ConnectionError("lost the internet, abort!") from err
+                if any(m in str(err) for m in self.BOT_MESSAGES):
+                    print(self.BOT_ERROR_LOG)
+                    rand_sleep(self.config)
+                    raise ConnectionError(self.BOT_ERROR_LOG) from err
+
+                return False, str(err)
+
+        self._validate_cookie()
+
+        return True, True
+
+    def extract(self, url) -> tuple[dict | None, str | None]:
+        """
+        make extract request
+        returns response, error
+        """
+        with yt_dlp.YoutubeDL(self.obs) as ydl:
+            try:
+                response = ydl.extract_info(url)
+            except cookiejar.LoadError as err:
+                print(f"cookie file is invalid: {err}")
+                return None, str(err)
+            except yt_dlp.utils.ExtractorError as err:
+                print(f"{url}: failed to extract: {err}, continue...")
+                return None, str(err)
+            except yt_dlp.utils.DownloadError as err:
+                if "This channel does not have a" in str(err):
+                    return None, None
+
+                print(f"{url}: failed to get info from youtube: {err}")
+                if "Temporary failure in name resolution" in str(err):
+                    raise ConnectionError("lost the internet, abort!") from err
+                if any(m in str(err) for m in self.BOT_MESSAGES):
+                    print(self.BOT_ERROR_LOG)
+                    rand_sleep(self.config)
+                    raise ConnectionError(self.BOT_ERROR_LOG) from err
+
+                return None, str(err)
+
+        self._validate_cookie()
+
+        return response, None
+
+    def _validate_cookie(self):
+        """check cookie and write it back for next use"""
+        if not self.obs.get("cookiefile"):
+            # empty in tests
+            return
+
+        self.obs["cookiefile"].seek(0)
+        new_cookie = self.obs["cookiefile"].read().strip("\x00")
+
+        if self.config["downloads"]["cookie_import"]:
+            cookie_key = "cookie"
+            expire = False
+        else:
+            cookie_key = "cookie_temp"
+            expire = 60 * 30  # 30 min
+
+        old_cookie = RedisArchivist().get_message_str(cookie_key)
+        if new_cookie and old_cookie != new_cookie:
+            print(f"refreshed stored {cookie_key}")
+            RedisArchivist().set_message(
+                cookie_key, new_cookie, expire=expire, save=True
+            )
+
+
+class CookieHandler:
+    """handle youtube cookie for yt-dlp"""
+
+    COOKIE_EMPTY = "# Netscape HTTP Cookie File\n"
+
+    def __init__(self, config):
+        self.cookie_io = False
+        self.config = config
+
+    def get(self, message_str: str = "cookie"):
+        """get cookie io stream"""
+        cookie = RedisArchivist().get_message_str(message_str)
+        self.cookie_io = StringIO(cookie or self.COOKIE_EMPTY)
+        return self.cookie_io
+
+    def set_cookie(self, cookie):
+        """set cookie str and activate in config"""
+        cookie_clean = cookie.strip("\x00")
+        RedisArchivist().set_message("cookie", cookie_clean, save=True)
+        AppConfig().update_config({"downloads": {"cookie_import": True}})
+        self.config["downloads"]["cookie_import"] = True
+        print("[cookie]: activated and stored in Redis")
+
+    @staticmethod
+    def revoke():
+        """revoke cookie"""
+        RedisArchivist().del_message("cookie")
+        RedisArchivist().del_message("cookie:valid")
+        AppConfig().update_config({"downloads": {"cookie_import": False}})
+        print("[cookie]: revoked")
+
+    def validate(self) -> bool:
+        """validate cookie using the liked videos playlist"""
+        validation = RedisArchivist().get_message_dict("cookie:valid")
+        if validation:
+            print("[cookie]: used cached cookie validation")
+            return True
+
+        print("[cookie] validating cookie")
+        obs_request = {
+            "skip_download": True,
+            "extract_flat": True,
+        }
+        validator = YtWrap(obs_request, self.config)
+        response, error = validator.extract("LL")
+        self.store_validation(bool(response))
+
+        # update in redis to avoid expiring
+        modified = validator.obs["cookiefile"].getvalue().strip("\x00")
+        if modified:
+            cookie_clean = modified.strip("\x00")
+            RedisArchivist().set_message("cookie", cookie_clean)
+
+        if not response:
+            mess_dict = {
+                "status": "message:download",
+                "level": "error",
+                "title": "Cookie validation failed, exiting...",
+                "message": error,
+            }
+            RedisArchivist().set_message(
+                "message:download", mess_dict, expire=4
+            )
+            print("[cookie]: validation failed, exiting...")
+
+        print(f"[cookie]: validation success: {bool(response)}")
+        return bool(response)
+
+    @staticmethod
+    def store_validation(response):
+        """remember last validation"""
+        now = datetime.now()
+        message = {
+            "status": response,
+            "validated": int(now.timestamp()),
+            "validated_str": now.strftime("%Y-%m-%d %H:%M"),
+        }
+        RedisArchivist().set_message("cookie:valid", message, expire=3600)
