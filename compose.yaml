@@ -4,7 +4,7 @@ services:
     container_name: youtube-withdrawal
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "8008:8080"
     environment:
       - TA_URL=http://tubearchivist:8000
       - TA_API_KEY=${TA_API_KEY}
