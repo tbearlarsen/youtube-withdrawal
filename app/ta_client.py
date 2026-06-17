@@ -95,6 +95,11 @@ class TAClient:
         r = await self._client.post("/api/channel/", json=payload)
         r.raise_for_status()
 
+    async def unsubscribe_channel(self, channel_id: str) -> None:
+        payload = {"data": [{"channel_id": channel_id, "channel_subscribed": False}]}
+        r = await self._client.post("/api/channel/", json=payload)
+        r.raise_for_status()
+
     async def search(self, query: str) -> dict:
         r = await self._client.get("/api/search/", params={"query": query})
         r.raise_for_status()
@@ -116,17 +121,48 @@ class TAClient:
 
     async def get_all_pending(self) -> list[dict]:
         """Fetch every pending download across all channels, all pages."""
-        videos = []
-        page = 0
-        while True:
-            data = await self.get_download_list(page=page, status="pending")
-            batch = data.get("data", [])
-            videos.extend(batch)
-            paginate = data.get("paginate", {})
-            if page >= paginate.get("last_page", 0) or not batch:
-                break
-            page += 1
-        return videos
+        first = await self.get_download_list(page=0, status="pending")
+        last_page = first.get("paginate", {}).get("last_page", 0)
+        items = list(first.get("data", []))
+        if last_page > 0:
+            rest = await asyncio.gather(*[
+                self.get_download_list(page=p, status="pending")
+                for p in range(1, last_page + 1)
+            ])
+            for r in rest:
+                items.extend(r.get("data", []))
+        return items
+
+    async def get_all_download_items(
+        self,
+        channel_id: str | None = None,
+        status: str = "pending",
+        vid_type: str | None = None,
+    ) -> list[dict]:
+        first = await self.get_download_list(channel_id=channel_id, status=status, vid_type=vid_type, page=0)
+        last_page = first.get("paginate", {}).get("last_page", 0)
+        items = list(first.get("data", []))
+        if last_page > 0:
+            rest = await asyncio.gather(*[
+                self.get_download_list(channel_id=channel_id, status=status, vid_type=vid_type, page=p)
+                for p in range(1, last_page + 1)
+            ])
+            for r in rest:
+                items.extend(r.get("data", []))
+        return items
+
+    async def get_all_videos(self, channel_id: str | None = None) -> list[dict]:
+        first = await self.get_video_list(channel_id=channel_id, page=0, sort="published", order="desc")
+        last_page = first.get("paginate", {}).get("last_page", 0)
+        items = list(first.get("data", []))
+        if last_page > 0:
+            rest = await asyncio.gather(*[
+                self.get_video_list(channel_id=channel_id, page=p, sort="published", order="desc")
+                for p in range(1, last_page + 1)
+            ])
+            for r in rest:
+                items.extend(r.get("data", []))
+        return items
 
     async def get_video_list(
         self,
@@ -152,6 +188,16 @@ class TAClient:
         r.raise_for_status()
         return r.json()
 
+    async def get_video_detail(self, video_id: str) -> tuple[dict | None, str]:
+        """Try downloaded video first, fall back to download queue. Returns (data, source)."""
+        raw = await self.get_video(video_id)
+        if raw:
+            return raw.get("data") or raw, "downloaded"
+        data = await self.get_download_item(video_id)
+        if data:
+            return data, "pending"
+        return None, "unknown"
+
     async def delete_video(self, video_id: str) -> None:
         r = await self._client.delete(f"/api/video/{video_id}/")
         r.raise_for_status()
@@ -173,6 +219,27 @@ class TAClient:
         r = await self._client.post("/api/appsettings/config/", json=payload)
         r.raise_for_status()
         return r.json()
+
+    async def get_schedule(self, task_name: str) -> dict | None:
+        r = await self._client.get("/api/task/schedule/")
+        r.raise_for_status()
+        for entry in r.json():
+            if entry.get("name") == task_name:
+                return entry
+        return None
+
+    async def set_schedule(self, task_name: str, schedule: str) -> dict:
+        r = await self._client.post(
+            f"/api/task/schedule/{task_name}/",
+            json={"name": task_name, "schedule": schedule, "config": {}},
+        )
+        r.raise_for_status()
+        return r.json()
+
+    async def delete_schedule(self, task_name: str) -> None:
+        r = await self._client.delete(f"/api/task/schedule/{task_name}/")
+        if r.status_code not in (200, 204, 404):
+            r.raise_for_status()
 
     async def scan_subscriptions(self) -> dict:
         r = await self._client.post(

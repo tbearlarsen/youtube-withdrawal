@@ -2,486 +2,503 @@
 {% block title %}Settings — YouTube Withdrawal{% endblock %}
 
 {% block content %}
-<div class="p-8 max-w-2xl">
+<div style="display:flex;justify-content:center;padding:2.5rem 2rem">
+    <div style="display:flex;gap:3rem;width:100%;max-width:920px;align-items:flex-start">
 
-    <div class="mb-8">
-        <h1 class="text-2xl font-bold" style="color:var(--c-text)">Settings</h1>
-        <p class="text-sm mt-0.5" style="color:var(--c-text3)">Preferences and maintenance tools</p>
-    </div>
+        <!-- ── Sticky left nav ─────────────────────────────────────── -->
+        <nav style="width:148px;flex-shrink:0;position:sticky;top:calc(52px + 2rem)">
+            <p style="font-size:0.6rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;
+                      color:var(--c-text4);margin-bottom:0.6rem;padding:0 0.5rem">Settings</p>
+            <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.1rem">
+                {% for sec_id, sec_label in [
+                    ('s-appearance','Appearance'),
+                    ('s-navigation','Navigation'),
+                    ('s-downloads','Downloads'),
+                    ('s-backlog','Backlog Cleanup'),
+                    ('s-maintenance','Maintenance')
+                ] %}
+                <li>
+                    <a href="#{{ sec_id }}"
+                       class="settings-nav-link"
+                       data-target="{{ sec_id }}"
+                       style="display:block;font-size:0.72rem;padding:0.32rem 0.55rem;border-radius:0.45rem;
+                              color:var(--c-text3);text-decoration:none;transition:background-color 120ms,color 120ms;
+                              font-family:system-ui,sans-serif">
+                        {{ sec_label }}
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </nav>
 
-    <!-- ── Appearance ───────────────────────────────────────────── -->
-    <section class="mb-8">
-        <h2 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--c-text4)">Appearance</h2>
-        <div class="rounded-xl border p-5" style="background-color:var(--c-surface);border-color:var(--c-border)">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium" style="color:var(--c-text)">Theme</p>
-                    <p class="text-xs mt-0.5" style="color:var(--c-text3)">Switch between light and dark interface</p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="setTheme('light')" id="btn-light"
-                            class="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer"
-                            style="background-color:var(--c-surface2);border-color:var(--c-border);color:var(--c-text2)">
-                        Light
-                    </button>
-                    <button onclick="setTheme('dark')" id="btn-dark"
-                            class="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer"
-                            style="background-color:var(--c-surface2);border-color:var(--c-border);color:var(--c-text2)">
-                        Dark
-                    </button>
-                    <button onclick="setTheme('system')" id="btn-system"
-                            class="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer"
-                            style="background-color:var(--c-surface2);border-color:var(--c-border);color:var(--c-text2)">
-                        System
-                    </button>
-                </div>
+        <!-- ── Main content ───────────────────────────────────────── -->
+        <div style="flex:1;min-width:0;padding-bottom:75vh">
+
+            <div class="mb-8">
+                <h1 class="text-2xl font-bold" style="color:var(--c-text)">Settings</h1>
+                <p class="text-sm mt-0.5" style="color:var(--c-text3)">Preferences and maintenance tools</p>
             </div>
-        </div>
-    </section>
 
-    <!-- ── Display ──────────────────────────────────────────────── -->
-    <section class="mb-8">
-        <h2 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--c-text4)">Display</h2>
-        <div class="rounded-xl border p-5" style="background-color:var(--c-surface);border-color:var(--c-border)">
-            <div class="flex items-center justify-between gap-4">
-                <div>
-                    <p class="text-sm font-medium" style="color:var(--c-text)">Videos per page</p>
-                    <p class="text-xs mt-0.5" style="color:var(--c-text3)">How many videos to show on the home feed and channel pages</p>
+            <!-- ── Appearance ──────────────────────────────────────── -->
+            <section id="s-appearance" class="mb-8" style="scroll-margin-top:calc(52px + 1.5rem)">
+                <h2 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--c-text4)">Appearance</h2>
+                <div class="rounded-xl border p-5" style="background-color:var(--c-surface);border-color:var(--c-border)">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium" style="color:var(--c-text)">Theme</p>
+                            <p class="text-xs mt-0.5" style="color:var(--c-text3)">Switch between light and dark interface</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="setTheme('light')" id="btn-light"
+                                    class="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer"
+                                    style="background-color:var(--c-surface2);border-color:var(--c-border);color:var(--c-text2)">
+                                Light
+                            </button>
+                            <button onclick="setTheme('dark')" id="btn-dark"
+                                    class="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer"
+                                    style="background-color:var(--c-surface2);border-color:var(--c-border);color:var(--c-text2)">
+                                Dark
+                            </button>
+                            <button onclick="setTheme('system')" id="btn-system"
+                                    class="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer"
+                                    style="background-color:var(--c-surface2);border-color:var(--c-border);color:var(--c-text2)">
+                                System
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <form hx-post="/settings/page-size"
-                      hx-target="#page-size-result"
+            </section>
+
+            <!-- ── Navigation ─────────────────────────────────────── -->
+            <section id="s-navigation" class="mb-8" style="scroll-margin-top:calc(52px + 1.5rem)">
+                <h2 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--c-text4)">Navigation</h2>
+                <div class="rounded-xl border p-5" style="background-color:var(--c-surface);border-color:var(--c-border)">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="pt-0.5">
+                            <p class="text-sm font-medium" style="color:var(--c-text)">Watch link</p>
+                            <p class="text-xs mt-0.5" style="color:var(--c-text3)">URL for the Watch button in the nav bar. Leave blank to hide it.</p>
+                        </div>
+                        <form hx-post="/settings/watch-url"
+                              hx-target="#watch-url-result"
+                              hx-swap="innerHTML"
+                              class="flex items-center gap-2 shrink-0" style="min-width:0;max-width:340px;width:100%">
+                            <input type="url" name="url"
+                                   value="{{ watch_url_value }}"
+                                   placeholder="https://…"
+                                   class="text-sm rounded-lg px-3 py-2 border flex-1 min-w-0"
+                                   style="background-color:var(--c-surface2);color:var(--c-text);border-color:var(--c-border)">
+                            <button type="submit"
+                                    class="px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer shrink-0"
+                                    style="background-color:var(--c-surface2);color:var(--c-text2);border:1px solid var(--c-border)">
+                                Save
+                            </button>
+                        </form>
+                    </div>
+                    <div id="watch-url-result" class="mt-2 text-right"></div>
+                </div>
+            </section>
+
+            <!-- ── Downloads ──────────────────────────────────────── -->
+            <section id="s-downloads" class="mb-8" style="scroll-margin-top:calc(52px + 1.5rem)">
+                <h2 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--c-text4)">Downloads</h2>
+                <form hx-post="/settings/downloads"
+                      hx-target="#dl-save-result"
                       hx-swap="innerHTML"
-                      class="flex items-center gap-2 shrink-0">
-                    <select name="page_size"
-                            class="text-sm rounded-lg px-3 py-2 border cursor-pointer"
+                      class="rounded-xl border divide-y"
+                      style="background-color:var(--c-surface);border-color:var(--c-border);divide-color:var(--c-border)">
+
+                    {% macro toggle(name, val) %}
+                    <select name="{{ name }}"
+                            class="text-sm rounded-lg px-3 py-2 border cursor-pointer shrink-0"
                             style="background-color:var(--c-surface2);color:var(--c-text);border-color:var(--c-border)">
-                        <option value="20" {% if page_size == 20 %}selected{% endif %}>20</option>
-                        <option value="40" {% if page_size == 40 %}selected{% endif %}>40</option>
-                        <option value="60" {% if page_size == 60 %}selected{% endif %}>60</option>
-                        <option value="100" {% if page_size == 100 %}selected{% endif %}>100</option>
+                        <option value="true"  {% if val %}selected{% endif %}>On</option>
+                        <option value="false" {% if not val %}selected{% endif %}>Off</option>
                     </select>
-                    <button type="submit"
-                            class="px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer"
-                            style="background-color:var(--c-surface2);color:var(--c-text2);border:1px solid var(--c-border)">
-                        Save
-                    </button>
+                    {% endmacro %}
+
+                    {% macro text_input(name, val, placeholder="") %}
+                    <input type="text" name="{{ name }}" value="{{ val or '' }}" placeholder="{{ placeholder }}"
+                           class="text-sm rounded-lg px-3 py-2 border w-48 shrink-0"
+                           style="background-color:var(--c-surface2);color:var(--c-text);border-color:var(--c-border)">
+                    {% endmacro %}
+
+                    {% macro num_input(name, val, placeholder="") %}
+                    <input type="number" name="{{ name }}" value="{{ val or '' }}" placeholder="{{ placeholder }}" min="0"
+                           class="text-sm rounded-lg px-3 py-2 border w-28 shrink-0"
+                           style="background-color:var(--c-surface2);color:var(--c-text);border-color:var(--c-border)">
+                    {% endmacro %}
+
+                    <!-- SponsorBlock -->
+                    <div class="p-4">
+                        <div class="flex items-center justify-between gap-4 mb-3">
+                            <div>
+                                <p class="text-sm font-medium" style="color:var(--c-text)">SponsorBlock</p>
+                                <p class="text-xs mt-0.5" style="color:var(--c-text3)">Fetch and store sponsor segment data with each video</p>
+                            </div>
+                            {{ toggle("integrate_sponsorblock", dl.integrate_sponsorblock) }}
+                        </div>
+                        <div>
+                            <p class="text-xs mb-2" style="color:var(--c-text4)">Segment categories to fetch</p>
+                            <div style="display:flex;flex-wrap:wrap;gap:0.4rem">
+                                {% for val, label in sb_all_categories %}
+                                <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.7rem;
+                                              padding:0.25rem 0.55rem;border-radius:999px;cursor:pointer;
+                                              border:1px solid var(--c-border);background-color:var(--c-surface2);
+                                              color:var(--c-text2)">
+                                    <input type="checkbox" name="sb_categories" value="{{ val }}"
+                                           {% if val in sb_categories %}checked{% endif %}
+                                           style="width:11px;height:11px;accent-color:var(--c-accent);cursor:pointer">
+                                    {{ label }}
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Auto-delete watched -->
+                    <div class="p-4 flex items-center justify-between gap-4">
+                        <div>
+                            <p class="text-sm font-medium" style="color:var(--c-text)">Auto-delete watched</p>
+                            <p class="text-xs mt-0.5" style="color:var(--c-text3)">Delete videos from disk N days after marking watched. Leave blank to keep forever</p>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            {{ num_input("autodelete_days", dl.autodelete_days, "days") }}
+                        </div>
+                    </div>
+
+                    <!-- Subtitles -->
+                    <div class="p-4 flex items-start justify-between gap-4">
+                        <div class="pt-0.5">
+                            <p class="text-sm font-medium" style="color:var(--c-text)">Subtitles</p>
+                            <p class="text-xs mt-0.5" style="color:var(--c-text3)">Language codes to download (e.g. <code>en</code> or <code>en,de</code>)</p>
+                        </div>
+                        <div class="flex flex-col items-end gap-2 shrink-0">
+                            {{ text_input("subtitle", dl.subtitle, "en") }}
+                            <select name="subtitle_source"
+                                    class="text-sm rounded-lg px-3 py-2 border cursor-pointer w-48"
+                                    style="background-color:var(--c-surface2);color:var(--c-text);border-color:var(--c-border)">
+                                <option value=""    {% if not dl.subtitle_source %}selected{% endif %}>Source: none</option>
+                                <option value="user" {% if dl.subtitle_source == 'user' %}selected{% endif %}>Source: uploaded</option>
+                                <option value="auto" {% if dl.subtitle_source == 'auto' %}selected{% endif %}>Source: auto-generated</option>
+                            </select>
+                            <div class="flex items-center justify-between w-48 text-xs" style="color:var(--c-text3)">
+                                <span>Index for search</span>
+                                {{ toggle("subtitle_index", dl.subtitle_index) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comments -->
+                    <div class="p-4 flex items-start justify-between gap-4">
+                        <div class="pt-0.5">
+                            <p class="text-sm font-medium" style="color:var(--c-text)">Comments</p>
+                            <p class="text-xs mt-0.5" style="color:var(--c-text3)">Archive video comments. Leave blank to skip</p>
+                        </div>
+                        <div class="flex flex-col items-end gap-2 shrink-0">
+                            {{ num_input("comment_max", dl.comment_max, "max count") }}
+                            <select name="comment_sort"
+                                    class="text-sm rounded-lg px-3 py-2 border cursor-pointer w-28"
+                                    style="background-color:var(--c-surface2);color:var(--c-text);border-color:var(--c-border)">
+                                <option value="top" {% if dl.comment_sort != 'new' %}selected{% endif %}>Top</option>
+                                <option value="new" {% if dl.comment_sort == 'new' %}selected{% endif %}>New</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Return YouTube Dislike -->
+                    <div class="p-4 flex items-center justify-between gap-4">
+                        <div>
+                            <p class="text-sm font-medium" style="color:var(--c-text)">Return YouTube Dislike</p>
+                            <p class="text-xs mt-0.5" style="color:var(--c-text3)">Fetch dislike counts from the community RYD API</p>
+                        </div>
+                        {{ toggle("integrate_ryd", dl.integrate_ryd) }}
+                    </div>
+
+                    <!-- Embed metadata -->
+                    <div class="p-4 flex items-center justify-between gap-4">
+                        <div>
+                            <p class="text-sm font-medium" style="color:var(--c-text)">Embed metadata</p>
+                            <p class="text-xs mt-0.5" style="color:var(--c-text3)">Write title, channel, date etc. into the video file itself</p>
+                        </div>
+                        {{ toggle("add_metadata", dl.add_metadata) }}
+                    </div>
+
+                    <!-- Format string -->
+                    <div class="p-4 flex items-start justify-between gap-4">
+                        <div class="pt-0.5">
+                            <p class="text-sm font-medium" style="color:var(--c-text)">Format string</p>
+                            <p class="text-xs mt-0.5" style="color:var(--c-text3)">yt-dlp <code>-f</code> value. Leave blank for best quality (recommended)</p>
+                        </div>
+                        {{ text_input("format", dl.format, "bestvideo+bestaudio/best") }}
+                    </div>
+
+                    <!-- Format sort -->
+                    <div class="p-4 flex items-start justify-between gap-4">
+                        <div class="pt-0.5">
+                            <p class="text-sm font-medium" style="color:var(--c-text)">Format sort</p>
+                            <p class="text-xs mt-0.5" style="color:var(--c-text3)">yt-dlp <code>--format-sort</code> value to rank formats without hard-filtering</p>
+                        </div>
+                        {{ text_input("format_sort", dl.format_sort, "res,codec:av01") }}
+                    </div>
+
+                    <!-- Sleep interval -->
+                    <div class="p-4 flex items-center justify-between gap-4">
+                        <div>
+                            <p class="text-sm font-medium" style="color:var(--c-text)">Sleep interval</p>
+                            <p class="text-xs mt-0.5" style="color:var(--c-text3)">Seconds to wait between downloads (default 10). Lower = faster, higher = safer</p>
+                        </div>
+                        {{ num_input("sleep_interval", dl.sleep_interval, "10") }}
+                    </div>
+
+                    <!-- Speed limit -->
+                    <div class="p-4 flex items-center justify-between gap-4">
+                        <div>
+                            <p class="text-sm font-medium" style="color:var(--c-text)">Speed limit</p>
+                            <p class="text-xs mt-0.5" style="color:var(--c-text3)">Cap download speed in KB/s. Leave blank for unlimited</p>
+                        </div>
+                        {{ num_input("limit_speed", dl.limit_speed, "KB/s") }}
+                    </div>
+
+                    <!-- Throttle detection -->
+                    <div class="p-4 flex items-center justify-between gap-4">
+                        <div>
+                            <p class="text-sm font-medium" style="color:var(--c-text)">Throttle detection limit</p>
+                            <p class="text-xs mt-0.5" style="color:var(--c-text3)">yt-dlp restarts download if speed drops below this KB/s (YouTube throttle detection)</p>
+                        </div>
+                        {{ num_input("throttledratelimit", dl.throttledratelimit, "KB/s") }}
+                    </div>
+
+                    <!-- Extractor language -->
+                    <div class="p-4 flex items-center justify-between gap-4">
+                        <div>
+                            <p class="text-sm font-medium" style="color:var(--c-text)">Extractor language</p>
+                            <p class="text-xs mt-0.5" style="color:var(--c-text3)">Preferred language for yt-dlp metadata extraction (e.g. <code>en</code>)</p>
+                        </div>
+                        {{ text_input("extractor_lang", dl.extractor_lang, "en") }}
+                    </div>
+
+                    <!-- Save -->
+                    <div class="p-4 flex items-center justify-between">
+                        <span id="dl-save-result"></span>
+                        <button type="submit"
+                                class="px-5 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+                                style="background-color:var(--c-surface2);color:var(--c-text);border:1px solid var(--c-border)">
+                            Save download settings
+                        </button>
+                    </div>
+
                 </form>
-            </div>
-            <div id="page-size-result" class="mt-2"></div>
-        </div>
-    </section>
+            </section>
 
-    <!-- ── Downloads ───────────────────────────────────────────────── -->
-    <section class="mb-8">
-        <h2 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--c-text4)">Downloads</h2>
-        <form hx-post="/settings/downloads"
-              hx-target="#dl-save-result"
-              hx-swap="innerHTML"
-              class="rounded-xl border divide-y"
-              style="background-color:var(--c-surface);border-color:var(--c-border);divide-color:var(--c-border)">
+            <!-- ── Backlog cleanup ─────────────────────────────────── -->
+            <section id="s-backlog" class="mb-8" style="scroll-margin-top:calc(52px + 1.5rem)">
+                <h2 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--c-text4)">Backlog Cleanup</h2>
+                <div class="rounded-xl border divide-y" style="background-color:var(--c-surface);border-color:var(--c-border);divide-color:var(--c-border)">
 
-            {% macro toggle(name, val) %}
-            <select name="{{ name }}"
-                    class="text-sm rounded-lg px-3 py-2 border cursor-pointer shrink-0"
-                    style="background-color:var(--c-surface2);color:var(--c-text);border-color:var(--c-border)">
-                <option value="true"  {% if val %}selected{% endif %}>On</option>
-                <option value="false" {% if not val %}selected{% endif %}>Off</option>
-            </select>
-            {% endmacro %}
-
-            {% macro text_input(name, val, placeholder="") %}
-            <input type="text" name="{{ name }}" value="{{ val or '' }}" placeholder="{{ placeholder }}"
-                   class="text-sm rounded-lg px-3 py-2 border w-48 shrink-0"
-                   style="background-color:var(--c-surface2);color:var(--c-text);border-color:var(--c-border)">
-            {% endmacro %}
-
-            {% macro num_input(name, val, placeholder="") %}
-            <input type="number" name="{{ name }}" value="{{ val or '' }}" placeholder="{{ placeholder }}" min="0"
-                   class="text-sm rounded-lg px-3 py-2 border w-28 shrink-0"
-                   style="background-color:var(--c-surface2);color:var(--c-text);border-color:var(--c-border)">
-            {% endmacro %}
-
-            <!-- SponsorBlock -->
-            <div class="p-4 flex items-center justify-between gap-4">
-                <div>
-                    <p class="text-sm font-medium" style="color:var(--c-text)">SponsorBlock</p>
-                    <p class="text-xs mt-0.5" style="color:var(--c-text3)">Fetch sponsor segment data so TA can skip them during playback</p>
-                </div>
-                {{ toggle("integrate_sponsorblock", dl.integrate_sponsorblock) }}
-            </div>
-
-            <!-- Auto-delete watched -->
-            <div class="p-4 flex items-center justify-between gap-4">
-                <div>
-                    <p class="text-sm font-medium" style="color:var(--c-text)">Auto-delete watched</p>
-                    <p class="text-xs mt-0.5" style="color:var(--c-text3)">Delete videos from disk N days after marking watched. Leave blank to keep forever</p>
-                </div>
-                <div class="flex items-center gap-2 shrink-0">
-                    {{ num_input("autodelete_days", dl.autodelete_days, "days") }}
-                </div>
-            </div>
-
-            <!-- Subtitles -->
-            <div class="p-4 flex items-start justify-between gap-4">
-                <div class="pt-0.5">
-                    <p class="text-sm font-medium" style="color:var(--c-text)">Subtitles</p>
-                    <p class="text-xs mt-0.5" style="color:var(--c-text3)">Language codes to download (e.g. <code>en</code> or <code>en,de</code>)</p>
-                </div>
-                <div class="flex flex-col items-end gap-2 shrink-0">
-                    {{ text_input("subtitle", dl.subtitle, "en") }}
-                    <select name="subtitle_source"
-                            class="text-sm rounded-lg px-3 py-2 border cursor-pointer w-48"
-                            style="background-color:var(--c-surface2);color:var(--c-text);border-color:var(--c-border)">
-                        <option value=""    {% if not dl.subtitle_source %}selected{% endif %}>Source: none</option>
-                        <option value="user" {% if dl.subtitle_source == 'user' %}selected{% endif %}>Source: uploaded</option>
-                        <option value="auto" {% if dl.subtitle_source == 'auto' %}selected{% endif %}>Source: auto-generated</option>
-                    </select>
-                    <div class="flex items-center justify-between w-48 text-xs" style="color:var(--c-text3)">
-                        <span>Index for search</span>
-                        {{ toggle("subtitle_index", dl.subtitle_index) }}
+                    <!-- Start Fresh -->
+                    <div class="p-5">
+                        <div class="flex flex-col sm:flex-row sm:items-start gap-4">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium" style="color:var(--c-text)">Start Fresh</p>
+                                <p class="text-xs mt-0.5" style="color:var(--c-text3)">
+                                    Ignore all pending videos older than a chosen age across every channel.
+                                    Useful after subscribing to many channels at once.
+                                </p>
+                                <div id="ignore-result" class="mt-2"></div>
+                            </div>
+                            <form hx-post="/settings/ignore-before"
+                                  hx-target="#ignore-result"
+                                  hx-swap="innerHTML"
+                                  hx-indicator="#ignore-spinner"
+                                  class="flex items-center gap-2 shrink-0">
+                                <select name="days"
+                                        class="text-sm rounded-lg px-3 py-2 border cursor-pointer"
+                                        style="background-color:var(--c-surface2);color:var(--c-text);border-color:var(--c-border)">
+                                    <option value="30">30 days</option>
+                                    <option value="60">60 days</option>
+                                    <option value="90" selected>90 days</option>
+                                    <option value="180">6 months</option>
+                                    <option value="365">1 year</option>
+                                </select>
+                                <button type="submit"
+                                        class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium text-white transition-colors cursor-pointer shrink-0">
+                                    <span id="ignore-spinner" class="htmx-indicator">Working…</span>
+                                    <span class="htmx-request:hidden">Ignore older</span>
+                                </button>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Comments -->
-            <div class="p-4 flex items-start justify-between gap-4">
-                <div class="pt-0.5">
-                    <p class="text-sm font-medium" style="color:var(--c-text)">Comments</p>
-                    <p class="text-xs mt-0.5" style="color:var(--c-text3)">Archive video comments. Leave blank to skip</p>
-                </div>
-                <div class="flex flex-col items-end gap-2 shrink-0">
-                    {{ num_input("comment_max", dl.comment_max, "max count") }}
-                    <select name="comment_sort"
-                            class="text-sm rounded-lg px-3 py-2 border cursor-pointer w-28"
-                            style="background-color:var(--c-surface2);color:var(--c-text);border-color:var(--c-border)">
-                        <option value="top" {% if dl.comment_sort != 'new' %}selected{% endif %}>Top</option>
-                        <option value="new" {% if dl.comment_sort == 'new' %}selected{% endif %}>New</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Return YouTube Dislike -->
-            <div class="p-4 flex items-center justify-between gap-4">
-                <div>
-                    <p class="text-sm font-medium" style="color:var(--c-text)">Return YouTube Dislike</p>
-                    <p class="text-xs mt-0.5" style="color:var(--c-text3)">Fetch dislike counts from the community RYD API</p>
-                </div>
-                {{ toggle("integrate_ryd", dl.integrate_ryd) }}
-            </div>
-
-            <!-- Embed metadata -->
-            <div class="p-4 flex items-center justify-between gap-4">
-                <div>
-                    <p class="text-sm font-medium" style="color:var(--c-text)">Embed metadata</p>
-                    <p class="text-xs mt-0.5" style="color:var(--c-text3)">Write title, channel, date etc. into the video file itself</p>
-                </div>
-                {{ toggle("add_metadata", dl.add_metadata) }}
-            </div>
-
-            <!-- Format string -->
-            <div class="p-4 flex items-start justify-between gap-4">
-                <div class="pt-0.5">
-                    <p class="text-sm font-medium" style="color:var(--c-text)">Format string</p>
-                    <p class="text-xs mt-0.5" style="color:var(--c-text3)">yt-dlp <code>-f</code> value. Leave blank for best quality (recommended)</p>
-                </div>
-                {{ text_input("format", dl.format, "bestvideo+bestaudio/best") }}
-            </div>
-
-            <!-- Format sort -->
-            <div class="p-4 flex items-start justify-between gap-4">
-                <div class="pt-0.5">
-                    <p class="text-sm font-medium" style="color:var(--c-text)">Format sort</p>
-                    <p class="text-xs mt-0.5" style="color:var(--c-text3)">yt-dlp <code>--format-sort</code> value to rank formats without hard-filtering</p>
-                </div>
-                {{ text_input("format_sort", dl.format_sort, "res,codec:av01") }}
-            </div>
-
-            <!-- Sleep interval -->
-            <div class="p-4 flex items-center justify-between gap-4">
-                <div>
-                    <p class="text-sm font-medium" style="color:var(--c-text)">Sleep interval</p>
-                    <p class="text-xs mt-0.5" style="color:var(--c-text3)">Seconds to wait between downloads (default 10). Lower = faster, higher = safer</p>
-                </div>
-                {{ num_input("sleep_interval", dl.sleep_interval, "10") }}
-            </div>
-
-            <!-- Speed limit -->
-            <div class="p-4 flex items-center justify-between gap-4">
-                <div>
-                    <p class="text-sm font-medium" style="color:var(--c-text)">Speed limit</p>
-                    <p class="text-xs mt-0.5" style="color:var(--c-text3)">Cap download speed in KB/s. Leave blank for unlimited</p>
-                </div>
-                {{ num_input("limit_speed", dl.limit_speed, "KB/s") }}
-            </div>
-
-            <!-- Throttle detection -->
-            <div class="p-4 flex items-center justify-between gap-4">
-                <div>
-                    <p class="text-sm font-medium" style="color:var(--c-text)">Throttle detection limit</p>
-                    <p class="text-xs mt-0.5" style="color:var(--c-text3)">yt-dlp restarts download if speed drops below this KB/s (YouTube throttle detection)</p>
-                </div>
-                {{ num_input("throttledratelimit", dl.throttledratelimit, "KB/s") }}
-            </div>
-
-            <!-- Extractor language -->
-            <div class="p-4 flex items-center justify-between gap-4">
-                <div>
-                    <p class="text-sm font-medium" style="color:var(--c-text)">Extractor language</p>
-                    <p class="text-xs mt-0.5" style="color:var(--c-text3)">Preferred language for yt-dlp metadata extraction (e.g. <code>en</code>)</p>
-                </div>
-                {{ text_input("extractor_lang", dl.extractor_lang, "en") }}
-            </div>
-
-            <!-- Save -->
-            <div class="p-4 flex items-center justify-between">
-                <span id="dl-save-result"></span>
-                <button type="submit"
-                        class="px-5 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
-                        style="background-color:var(--c-surface2);color:var(--c-text);border:1px solid var(--c-border)">
-                    Save download settings
-                </button>
-            </div>
-
-        </form>
-    </section>
-
-    <!-- ── Backlog cleanup ───────────────────────────────────────── -->
-    <section class="mb-8">
-        <h2 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--c-text4)">Backlog Cleanup</h2>
-        <div class="rounded-xl border divide-y" style="background-color:var(--c-surface);border-color:var(--c-border);divide-color:var(--c-border)">
-
-            <!-- Start Fresh -->
-            <div class="p-5">
-                <div class="flex flex-col sm:flex-row sm:items-start gap-4">
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium" style="color:var(--c-text)">Start Fresh</p>
-                        <p class="text-xs mt-0.5" style="color:var(--c-text3)">
-                            Ignore all pending videos older than a chosen age across every channel.
-                            Useful after subscribing to many channels at once.
-                        </p>
-                        <div id="ignore-result" class="mt-2"></div>
-                    </div>
-                    <form hx-post="/settings/ignore-before"
-                          hx-target="#ignore-result"
-                          hx-swap="innerHTML"
-                          hx-indicator="#ignore-spinner"
-                          class="flex items-center gap-2 shrink-0">
-                        <select name="days"
-                                class="text-sm rounded-lg px-3 py-2 border cursor-pointer"
-                                style="background-color:var(--c-surface2);color:var(--c-text);border-color:var(--c-border)">
-                            <option value="30">30 days</option>
-                            <option value="60">60 days</option>
-                            <option value="90" selected>90 days</option>
-                            <option value="180">6 months</option>
-                            <option value="365">1 year</option>
-                        </select>
-                        <button type="submit"
-                                class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium text-white transition-colors cursor-pointer shrink-0">
-                            <span id="ignore-spinner" class="htmx-indicator">Working…</span>
-                            <span class="htmx-request:hidden">Ignore older</span>
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Purge shorts & streams -->
-            <div class="p-5 flex items-center justify-between gap-4">
-                <div>
-                    <p class="text-sm font-medium" style="color:var(--c-text)">Purge shorts &amp; streams</p>
-                    <p class="text-xs mt-0.5" style="color:var(--c-text3)">
-                        Ignore any pending shorts or live streams in the queue.
-                        New scans already skip them — this clears any that slipped in earlier.
-                    </p>
-                    <div id="shorts-result" class="mt-2"></div>
-                </div>
-                <button hx-post="/settings/ignore-shorts-streams"
-                        hx-target="#shorts-result"
-                        hx-swap="innerHTML"
-                        class="px-4 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer shrink-0"
-                        style="background-color:var(--c-surface2);color:var(--c-text2);border:1px solid var(--c-border)">
-                    Purge
-                </button>
-            </div>
-
-        </div>
-    </section>
-
-    <!-- ── Maintenance ───────────────────────────────────────────── -->
-    <section class="mb-8">
-        <h2 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--c-text4)">Maintenance</h2>
-        <div class="rounded-xl border divide-y" style="background-color:var(--c-surface);border-color:var(--c-border);divide-color:var(--c-border)">
-
-            <!-- Rescan filesystem -->
-            <div class="p-5 flex items-center justify-between gap-4">
-                <div>
-                    <p class="text-sm font-medium" style="color:var(--c-text)">Rescan filesystem</p>
-                    <p class="text-xs mt-0.5" style="color:var(--c-text3)">
-                        Re-index files already on disk without re-downloading
-                    </p>
-                </div>
-                <div class="flex items-center gap-3 shrink-0">
-                    <span id="rescan-result"></span>
-                    <button hx-post="/settings/rescan"
-                            hx-target="#rescan-result"
-                            hx-swap="innerHTML"
-                            class="px-4 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer"
-                            style="background-color:var(--c-surface2);color:var(--c-text2);border:1px solid var(--c-border)">
-                        Run
-                    </button>
-                </div>
-            </div>
-
-            <!-- Scan subscriptions -->
-            <div class="p-5">
-                <div class="flex items-center justify-between gap-4 mb-4">
-                    <div>
-                        <p class="text-sm font-medium" style="color:var(--c-text)">Scan subscriptions</p>
-                        <p class="text-xs mt-0.5" style="color:var(--c-text3)">
-                            Check all subscribed channels for new videos and add them to the pending queue
-                        </p>
-                        {% if last_scan %}
-                        <p class="text-xs mt-1.5" style="color:var(--c-text4)">
-                            Last run: {{ last_scan.date_done | replace("T", " ") | truncate(16, end="") }}
-                            {% if last_scan.result %} — {{ last_scan.result }}{% endif %}
-                        </p>
-                        {% endif %}
-                    </div>
-                    <div class="flex items-center gap-3 shrink-0">
-                        <span id="scan-result"></span>
-                        <button hx-post="/settings/scan-subscriptions"
-                                hx-target="#scan-result"
+                    <!-- Purge shorts & streams -->
+                    <div class="p-5 flex items-center justify-between gap-4">
+                        <div>
+                            <p class="text-sm font-medium" style="color:var(--c-text)">Purge shorts &amp; streams</p>
+                            <p class="text-xs mt-0.5" style="color:var(--c-text3)">
+                                Ignore any pending shorts or live streams in the queue.
+                                New scans already skip them — this clears any that slipped in earlier.
+                            </p>
+                            <div id="shorts-result" class="mt-2"></div>
+                        </div>
+                        <button hx-post="/settings/ignore-shorts-streams"
+                                hx-target="#shorts-result"
                                 hx-swap="innerHTML"
-                                class="px-4 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+                                class="px-4 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer shrink-0"
                                 style="background-color:var(--c-surface2);color:var(--c-text2);border:1px solid var(--c-border)">
-                            Scan now
+                            Purge
                         </button>
                     </div>
+
                 </div>
+            </section>
 
-                <!-- Auto-scan interval -->
-                <div class="flex items-center justify-between gap-4 mb-4 pt-4" style="border-top:1px solid var(--c-border)">
-                    <div>
-                        <p class="text-sm" style="color:var(--c-text2)">Auto-scan interval</p>
-                        <p class="text-xs mt-0.5" style="color:var(--c-text4)">How often to automatically check for new videos</p>
-                    </div>
-                    <form hx-post="/settings/scan-interval"
-                          hx-target="#scan-interval-result"
-                          hx-swap="innerHTML"
-                          class="flex items-center gap-2 shrink-0">
-                        <select name="interval"
-                                class="text-sm rounded-lg px-3 py-2 border cursor-pointer"
-                                style="background-color:var(--c-surface2);color:var(--c-text);border-color:var(--c-border)">
-                            <option value="0"   {% if not scan_interval_minutes %}selected{% endif %}>Off</option>
-                            <option value="15"  {% if scan_interval_minutes == 15  %}selected{% endif %}>Every 15 min</option>
-                            <option value="30"  {% if scan_interval_minutes == 30  %}selected{% endif %}>Every 30 min</option>
-                            <option value="60"  {% if scan_interval_minutes == 60  %}selected{% endif %}>Every hour</option>
-                            <option value="120" {% if scan_interval_minutes == 120 %}selected{% endif %}>Every 2 hours</option>
-                            <option value="360" {% if scan_interval_minutes == 360 %}selected{% endif %}>Every 6 hours</option>
-                        </select>
-                        <button type="submit"
-                                class="px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer"
-                                style="background-color:var(--c-surface2);color:var(--c-text2);border:1px solid var(--c-border)">
-                            Save
-                        </button>
-                    </form>
-                </div>
-                <div id="scan-interval-result" class="text-right"></div>
+            <!-- ── Maintenance ────────────────────────────────────── -->
+            <section id="s-maintenance" class="mb-8" style="scroll-margin-top:calc(52px + 1.5rem)">
+                <h2 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--c-text4)">Maintenance</h2>
+                <div class="rounded-xl border divide-y" style="background-color:var(--c-surface);border-color:var(--c-border);divide-color:var(--c-border)">
 
-                <!-- Shorts & streams toggles -->
-                <div class="rounded-lg p-3 space-y-3" style="background-color:var(--c-surface2)">
-                    <p class="text-xs font-semibold uppercase tracking-wide" style="color:var(--c-text4)">Include during scan</p>
-
-                    <!-- Shorts -->
-                    <div class="flex items-center justify-between">
+                    <!-- Rescan filesystem -->
+                    <div class="p-5 flex items-center justify-between gap-4">
                         <div>
-                            <p class="text-sm" style="color:var(--c-text2)">Shorts</p>
-                            <p class="text-xs" style="color:var(--c-text4)">YouTube Shorts (&lt;60 s vertical videos)</p>
+                            <p class="text-sm font-medium" style="color:var(--c-text)">Rescan filesystem</p>
+                            <p class="text-xs mt-0.5" style="color:var(--c-text3)">
+                                Re-index files already on disk without re-downloading
+                            </p>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <span id="shorts-toggle-result"></span>
-                            {% if shorts_enabled is not none %}
-                            <button id="shorts-toggle-btn"
-                                    hx-post="/settings/vid-type-toggle"
-                                    hx-vals='{"vid_type": "shorts", "enabled": "{% if shorts_enabled %}false{% else %}true{% endif %}"}'
-                                    hx-target="#shorts-toggle-result"
+                        <div class="flex items-center gap-3 shrink-0">
+                            <span id="rescan-result"></span>
+                            <button hx-post="/settings/rescan"
+                                    hx-target="#rescan-result"
                                     hx-swap="innerHTML"
-                                    hx-on::after-request="toggleVidTypeBtn('shorts', this)"
-                                    class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer border-0"
-                                    style="background-color:{% if shorts_enabled %}rgb(22 163 74){% else %}var(--c-hover){% endif %}"
-                                    title="{% if shorts_enabled %}Disable{% else %}Enable{% endif %} shorts">
-                                <span class="inline-block h-4 w-4 rounded-full bg-white shadow transition-transform"
-                                      style="transform: translateX({% if shorts_enabled %}1.375rem{% else %}0.25rem{% endif %})"></span>
+                                    class="px-4 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+                                    style="background-color:var(--c-surface2);color:var(--c-text2);border:1px solid var(--c-border)">
+                                Run
                             </button>
-                            {% endif %}
                         </div>
                     </div>
 
-                    <!-- Streams -->
-                    <div class="flex items-center justify-between">
+                    <!-- Scan subscriptions -->
+                    <div class="p-5">
+                        <div class="flex items-center justify-between gap-4 mb-4">
+                            <div>
+                                <p class="text-sm font-medium" style="color:var(--c-text)">Scan subscriptions</p>
+                                <p class="text-xs mt-0.5" style="color:var(--c-text3)">
+                                    Check all subscribed channels for new videos and add them to the pending queue
+                                </p>
+                                {% if last_scan %}
+                                <p class="text-xs mt-1.5" style="color:var(--c-text4)">
+                                    Last run: {{ last_scan.date_done | replace("T", " ") | truncate(16, end="") }}
+                                    {% if last_scan.result %} — {{ last_scan.result }}{% endif %}
+                                </p>
+                                {% endif %}
+                            </div>
+                            <div class="flex items-center gap-3 shrink-0">
+                                <span id="scan-result"></span>
+                                <button hx-post="/settings/scan-subscriptions"
+                                        hx-target="#scan-result"
+                                        hx-swap="innerHTML"
+                                        class="px-4 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+                                        style="background-color:var(--c-surface2);color:var(--c-text2);border:1px solid var(--c-border)">
+                                    Scan now
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Auto-scan schedule -->
+                        <div class="flex items-center justify-between gap-4 mb-4 pt-4" style="border-top:1px solid var(--c-border)">
+                            <div>
+                                <p class="text-sm" style="color:var(--c-text2)">Auto-scan schedule</p>
+                                <p class="text-xs mt-0.5" style="color:var(--c-text4)">
+                                    {% if scan_schedule %}{{ scan_schedule.schedule_human }}{% else %}Not scheduled{% endif %}
+                                </p>
+                            </div>
+                            <form hx-post="/settings/scan-schedule"
+                                  hx-target="#scan-schedule-result"
+                                  hx-swap="innerHTML"
+                                  class="flex items-center gap-2 shrink-0">
+                                <select name="schedule"
+                                        class="text-sm rounded-lg px-3 py-2 border cursor-pointer"
+                                        style="background-color:var(--c-surface2);color:var(--c-text);border-color:var(--c-border)">
+                                    <option value=""       {% if not scan_schedule %}selected{% endif %}>Off</option>
+                                    <option value="0 */1 *" {% if scan_schedule and scan_schedule.schedule == '0 */1 *' %}selected{% endif %}>Every hour</option>
+                                    <option value="0 */2 *" {% if scan_schedule and scan_schedule.schedule == '0 */2 *' %}selected{% endif %}>Every 2 hours</option>
+                                    <option value="0 */4 *" {% if scan_schedule and scan_schedule.schedule == '0 */4 *' %}selected{% endif %}>Every 4 hours</option>
+                                    <option value="0 */6 *" {% if scan_schedule and scan_schedule.schedule == '0 */6 *' %}selected{% endif %}>Every 6 hours</option>
+                                    <option value="0 */12 *" {% if scan_schedule and scan_schedule.schedule == '0 */12 *' %}selected{% endif %}>Every 12 hours</option>
+                                    <option value="0 3 *"  {% if scan_schedule and scan_schedule.schedule == '0 3 *' %}selected{% endif %}>Daily at 3 AM</option>
+                                </select>
+                                <button type="submit"
+                                        class="px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+                                        style="background-color:var(--c-surface2);color:var(--c-text2);border:1px solid var(--c-border)">
+                                    Save
+                                </button>
+                            </form>
+                        </div>
+                        <div id="scan-schedule-result" class="text-right mb-4"></div>
+
+                        <!-- Subscription sizes -->
+                        <form hx-post="/settings/subscription-sizes"
+                              hx-target="#sub-size-result"
+                              hx-swap="innerHTML"
+                              class="rounded-lg p-3" style="background-color:var(--c-surface2)">
+                            <p class="text-xs font-semibold uppercase tracking-wide mb-3" style="color:var(--c-text4)">Videos indexed per scan</p>
+
+                            {% macro size_row(name, val, label, hint) %}
+                            <div class="flex items-center justify-between mb-2.5">
+                                <div>
+                                    <p class="text-sm" style="color:var(--c-text2)">{{ label }}</p>
+                                    <p class="text-xs" style="color:var(--c-text4)">{{ hint }}</p>
+                                </div>
+                                <input type="number" name="{{ name }}" value="{{ val }}" min="0"
+                                       class="text-sm rounded-lg px-3 py-1.5 border w-20 shrink-0 text-right"
+                                       style="background-color:var(--c-surface);color:var(--c-text);border-color:var(--c-border)">
+                            </div>
+                            {% endmacro %}
+
+                            {{ size_row("channel_size", channel_size, "Videos per channel", "How many recent videos to index per channel") }}
+                            {{ size_row("shorts_size",  shorts_size,  "Shorts",             "0 = disabled") }}
+                            {{ size_row("live_size",    live_size,    "Live streams",        "0 = disabled") }}
+
+                            <div class="flex items-center justify-between mt-3 pt-3" style="border-top:1px solid var(--c-border)">
+                                <span id="sub-size-result" class="text-xs"></span>
+                                <button type="submit"
+                                        class="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors"
+                                        style="background-color:var(--c-surface);color:var(--c-text2);border:1px solid var(--c-border)">
+                                    Save
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- TubeArchivist link -->
+                    <div class="p-5 flex items-center justify-between gap-4">
                         <div>
-                            <p class="text-sm" style="color:var(--c-text2)">Live streams</p>
-                            <p class="text-xs" style="color:var(--c-text4)">Live stream recordings and premieres</p>
+                            <p class="text-sm font-medium" style="color:var(--c-text)">TubeArchivist</p>
+                            <p class="text-xs mt-0.5" style="color:var(--c-text3)">
+                                Open the TubeArchivist interface for advanced management
+                            </p>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <span id="streams-toggle-result"></span>
-                            {% if streams_enabled is not none %}
-                            <button id="streams-toggle-btn"
-                                    hx-post="/settings/vid-type-toggle"
-                                    hx-vals='{"vid_type": "streams", "enabled": "{% if streams_enabled %}false{% else %}true{% endif %}"}'
-                                    hx-target="#streams-toggle-result"
-                                    hx-swap="innerHTML"
-                                    hx-on::after-request="toggleVidTypeBtn('streams', this)"
-                                    class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer border-0"
-                                    style="background-color:{% if streams_enabled %}rgb(22 163 74){% else %}var(--c-hover){% endif %}"
-                                    title="{% if streams_enabled %}Disable{% else %}Enable{% endif %} streams">
-                                <span class="inline-block h-4 w-4 rounded-full bg-white shadow transition-transform"
-                                      style="transform: translateX({% if streams_enabled %}1.375rem{% else %}0.25rem{% endif %})"></span>
-                            </button>
-                            {% endif %}
-                        </div>
+                        <a href="http://10.0.0.101:8001" target="_blank"
+                           class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-colors shrink-0"
+                           style="background-color:var(--c-surface2);color:var(--c-text2);border:1px solid var(--c-border)">
+                            Open
+                            <svg style="width:11px;height:11px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                            </svg>
+                        </a>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <!-- TubeArchivist link -->
-            <div class="p-5 flex items-center justify-between gap-4">
-                <div>
-                    <p class="text-sm font-medium" style="color:var(--c-text)">TubeArchivist</p>
-                    <p class="text-xs mt-0.5" style="color:var(--c-text3)">
-                        Open the TubeArchivist interface for advanced management
-                    </p>
-                </div>
-                <a href="http://10.0.0.101:8001" target="_blank"
-                   class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-colors shrink-0"
-                   style="background-color:var(--c-surface2);color:var(--c-text2);border:1px solid var(--c-border)">
-                    Open
-                    <svg style="width:11px;height:11px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                    </svg>
-                </a>
-            </div>
-        </div>
-    </section>
-
-</div>
+        </div><!-- /main content -->
+    </div><!-- /flex container -->
+</div><!-- /centering wrapper -->
 
 <script>
+    // ── Theme switcher ──────────────────────────────────────────────
     function setTheme(t) {
         localStorage.setItem('yw-theme', t);
         applyTheme(t);
         updateThemeButtons(t);
-    }
-
-    function toggleVidTypeBtn(type, btn) {
-        var knob = btn.querySelector('span');
-        var isOn = btn.style.backgroundColor === 'rgb(22, 163, 74)';
-        // flip visual state
-        btn.style.backgroundColor = isOn ? 'var(--c-hover)' : 'rgb(22, 163, 74)';
-        knob.style.transform = isOn ? 'translateX(0.25rem)' : 'translateX(1.375rem)';
-        // flip hx-vals for next click
-        var newEnabled = isOn ? 'true' : 'false';
-        btn.setAttribute('hx-vals', JSON.stringify({vid_type: type, enabled: newEnabled}));
-        htmx.process(btn);
     }
 
     function updateThemeButtons(t) {
@@ -494,5 +511,45 @@
     }
 
     updateThemeButtons(localStorage.getItem('yw-theme') || 'system');
+
+    // ── Sticky nav: smooth scroll + active highlight ────────────────
+    var NAV_HEIGHT = 52;
+
+    document.querySelectorAll('.settings-nav-link').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            var target = document.getElementById(link.dataset.target);
+            if (!target) return;
+            var top = target.getBoundingClientRect().top + window.scrollY - NAV_HEIGHT - 24;
+            window.scrollTo({ top: top, behavior: 'smooth' });
+        });
+    });
+
+    function setActiveLink(id) {
+        document.querySelectorAll('.settings-nav-link').forEach(function(el) {
+            var on = el.dataset.target === id;
+            el.style.backgroundColor = on ? 'var(--c-hover)' : '';
+            el.style.color = on ? 'var(--c-text)' : 'var(--c-text3)';
+            el.style.fontWeight = on ? '500' : '400';
+        });
+    }
+
+    var sections = ['s-appearance','s-navigation','s-downloads','s-backlog','s-maintenance'];
+    var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting) setActiveLink(entry.target.id);
+        });
+    }, { rootMargin: '-' + (NAV_HEIGHT + 8) + 'px 0px -65% 0px', threshold: 0 });
+
+    sections.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) observer.observe(el);
+    });
+
+    window.addEventListener('scroll', function() {
+        if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 8) {
+            setActiveLink(sections[sections.length - 1]);
+        }
+    }, { passive: true });
 </script>
 {% endblock %}

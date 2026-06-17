@@ -5,6 +5,7 @@ import re
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse
 
+from app import auto_download as auto_dl
 from app.favorites import toggle_favorite, is_favorite, get_favorites
 from app.templating import templates
 
@@ -114,14 +115,17 @@ async def channels_page(request: Request, sort: str = "pending-desc"):
     else:  # favorites
         channels.sort(key=lambda c: (fav_first(c), name(c)))
 
+    auto_download_ids = set(auto_dl.get_all())
     return templates.TemplateResponse(
         request,
         "pages/channels.html",
         {
             "channels": channels,
             "active_page": "channels",
+            "active_section": "library",
             "favorites": favorites,
             "pending_counts": pending_counts,
+            "auto_download_ids": auto_download_ids,
             "current_sort": sort,
             "sort_options": SORT_OPTIONS,
         },
@@ -202,6 +206,73 @@ async def card_star(request: Request, channel_id: str):
         "partials/channel_star.html",
         {"channel": {"channel_id": channel_id}, "favorites": favorites},
     )
+
+
+@router.post("/channels/{channel_id}/auto-download")
+async def toggle_auto_download(request: Request, channel_id: str, enable: str = Form(None)):
+    if enable is None:
+        enabled = auto_dl.toggle(channel_id)
+    elif enable.lower() == "true":
+        auto_dl.enable(channel_id)
+        enabled = True
+    else:
+        auto_dl.disable(channel_id)
+        enabled = False
+
+    if enabled:
+        ta = request.app.state.ta
+        from app import requested as req_tracker
+        already = req_tracker.get_all()
+        try:
+            pending_videos = await ta.get_all_download_items(channel_id=channel_id, status="pending")
+            for video in pending_videos:
+                vid_id = video.get("youtube_id")
+                if vid_id and vid_id not in already:
+                    await ta.request_video(vid_id)
+                    req_tracker.add(vid_id)
+        except Exception:
+            pass
+
+    from fastapi.responses import Response as FastAPIResponse
+    return FastAPIResponse(headers={"HX-Refresh": "true"})
+
+
+@router.post("/channels/{channel_id}/unsubscribe")
+async def unsubscribe_channel(request: Request, channel_id: str):
+    await request.app.state.ta.unsubscribe_channel(channel_id)
+    from fastapi.responses import Response as FastAPIResponse
+    return FastAPIResponse(headers={"HX-Redirect": "/channels"})
+
+
+@router.post("/channels/{channel_id}/request-all")
+async def request_all_pending(request: Request, channel_id: str):
+    ta = request.app.state.ta
+    from app import requested as req_tracker
+    already = req_tracker.get_all()
+    try:
+        pending_videos = await ta.get_all_download_items(channel_id=channel_id, status="pending")
+        for video in pending_videos:
+            vid_id = video.get("youtube_id")
+            if vid_id and vid_id not in already:
+                await ta.request_video(vid_id)
+                req_tracker.add(vid_id)
+    except Exception:
+        pass
+    from fastapi.responses import Response as FastAPIResponse
+    return FastAPIResponse(headers={"HX-Refresh": "true"})
+
+
+@router.post("/channels/{channel_id}/restore-all-ignored")
+async def restore_all_ignored(request: Request, channel_id: str):
+    ta = request.app.state.ta
+    ignored = await ta.get_all_download_items(channel_id=channel_id, status="ignore")
+    if not ignored:
+        return HTMLResponse(
+            '<span style="font-size:0.72rem;color:var(--c-text4)">Nothing to restore</span>'
+        )
+    await asyncio.gather(*[ta.restore_video(v["youtube_id"]) for v in ignored], return_exceptions=True)
+    from fastapi.responses import Response as FastAPIResponse
+    return FastAPIResponse(headers={"HX-Refresh": "true"})
 
 
 @router.post("/channels/{channel_id}/ignore-all")

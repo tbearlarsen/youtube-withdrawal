@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block title %}{{ video.title | default('Video') }} — YouTube Withdrawal{% endblock %}
+
+{% block content %}
+<div style="padding:2rem 2.5rem;max-width:1100px">
+
+    <div style="display:flex;gap:2.5rem;align-items:flex-start">
+
+        <!-- Thumbnail -->
+        <div style="width:46%;flex-shrink:0">
+            <div class="rounded-2xl overflow-hidden"
+                 style="aspect-ratio:16/9;background-color:var(--c-surface2)">
+                {% if video.vid_thumb_url %}
+                <img src="{{ video.vid_thumb_url | ta_thumb }}"
+                     class="w-full h-full object-cover" alt="">
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center">
+                    <svg style="width:3rem;height:3rem;color:var(--c-text4)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                              d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                    </svg>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Tags (downloaded videos only) -->
+            {% if video.tags %}
+            <div style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-top:1rem">
+                {% for tag in video.tags[:12] %}
+                <span style="font-size:0.58rem;letter-spacing:0.05em;padding:0.2rem 0.6rem;
+                             border-radius:999px;border:1px solid var(--c-border);
+                             color:var(--c-text4);font-family:system-ui,sans-serif">
+                    {{ tag }}
+                </span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Info panel -->
+        <div style="flex:1;min-width:0">
+
+            <!-- Channel -->
+            {% if channel_name %}
+            <a href="/channels/{{ channel_id }}"
+               style="font-size:0.65rem;letter-spacing:0.09em;text-transform:uppercase;
+                      font-weight:500;font-family:system-ui,sans-serif;
+                      color:var(--c-text4);text-decoration:none;transition:color 150ms"
+               onmouseover="this.style.color='var(--c-accent)'"
+               onmouseout="this.style.color='var(--c-text4)'">
+                {{ channel_name }}
+            </a>
+            {% endif %}
+
+            <!-- Title -->
+            <h1 style="font-size:1.35rem;line-height:1.3;margin-top:0.4rem;letter-spacing:-0.01em;color:var(--c-text)">
+                {{ video.title | default('') }}
+            </h1>
+
+            <!-- Metadata row -->
+            <div style="display:flex;flex-wrap:wrap;gap:0.3rem 0.85rem;margin-top:0.85rem;
+                        font-size:0.62rem;color:var(--c-text4);font-family:system-ui,sans-serif">
+
+                {% if video.published %}
+                <span>{{ video.published | format_published }}</span>
+                {% endif %}
+
+                {% set dur = video.duration %}
+                {% if not dur and video.player %}{% set dur = video.player.duration_str %}{% endif %}
+                {% if dur %}
+                <span style="color:var(--c-border)">·</span>
+                <span>{{ dur }}</span>
+                {% endif %}
+
+                {% if video.stats %}
+                {% if video.stats.view_count %}
+                <span style="color:var(--c-border)">·</span>
+                <span>{{ "{:,}".format(video.stats.view_count) }} views</span>
+                {% endif %}
+                {% if video.stats.like_count %}
+                <span style="color:var(--c-border)">·</span>
+                <span>{{ "{:,}".format(video.stats.like_count) }} likes</span>
+                {% endif %}
+                {% endif %}
+
+                {% if video.vid_type and video.vid_type not in ('videos', 'unknown') %}
+                <span style="color:var(--c-border)">·</span>
+                <span style="text-transform:uppercase;letter-spacing:0.07em">{{ video.vid_type }}</span>
+                {% endif %}
+
+            </div>
+
+            <!-- Status + actions -->
+            <div id="vid-actions-{{ video.youtube_id }}"
+                 style="display:flex;align-items:center;gap:0.6rem;margin-top:1.5rem;flex-wrap:wrap">
+
+                {% if source == 'downloaded' %}
+                <span style="display:inline-flex;align-items:center;gap:0.4rem;
+                             font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;
+                             font-weight:500;font-family:system-ui,sans-serif;color:var(--c-queued)">
+                    <span style="width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0"></span>
+                    Downloaded
+                </span>
+                <button hx-delete="/videos/{{ video.youtube_id }}"
+                        hx-confirm="Delete this video from TubeArchivist?"
+                        hx-on::after-request="window.history.back()"
+                        style="margin-left:auto;font-size:0.58rem;letter-spacing:0.07em;text-transform:uppercase;
+                               font-weight:500;font-family:system-ui,sans-serif;cursor:pointer;
+                               padding:0.35rem 0.9rem;border-radius:0.5rem;
+                               border:1px solid var(--c-border);color:var(--c-text3);background:transparent;
+                               transition:border-color 150ms,color 150ms"
+                        onmouseover="this.style.borderColor='var(--c-text3)';this.style.color='var(--c-text)'"
+                        onmouseout="this.style.borderColor='var(--c-border)';this.style.color='var(--c-text3)'">
+                    Delete
+                </button>
+
+                {% elif video.status == 'ignore' %}
+                <span style="display:inline-flex;align-items:center;gap:0.4rem;
+                             font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;
+                             font-weight:500;font-family:system-ui,sans-serif;color:var(--c-text4)">
+                    <span style="width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0"></span>
+                    Ignored
+                </span>
+                <button hx-post="/videos/{{ video.youtube_id }}/restore"
+                        hx-target="#vid-actions-{{ video.youtube_id }}"
+                        hx-swap="outerHTML"
+                        style="font-size:0.58rem;letter-spacing:0.07em;text-transform:uppercase;
+                               font-weight:500;font-family:system-ui,sans-serif;cursor:pointer;
+                               padding:0.35rem 0.9rem;border-radius:0.5rem;
+                               border:1px solid var(--c-border);color:var(--c-text3);background:transparent;
+                               transition:border-color 150ms,color 150ms"
+                        onmouseover="this.style.borderColor='var(--c-text3)';this.style.color='var(--c-text)'"
+                        onmouseout="this.style.borderColor='var(--c-border)';this.style.color='var(--c-text3)'">
+                    Restore
+                </button>
+
+                {% elif is_queued %}
+                <span style="display:inline-flex;align-items:center;gap:0.4rem;
+                             font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;
+                             font-weight:500;font-family:system-ui,sans-serif;color:var(--c-queued)">
+                    <span style="width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0"></span>
+                    Requested
+                </span>
+
+                {% else %}
+                <button hx-post="/videos/{{ video.youtube_id }}/request"
+                        hx-target="#vid-actions-{{ video.youtube_id }}"
+                        hx-swap="outerHTML"
+                        style="font-size:0.58rem;letter-spacing:0.07em;text-transform:uppercase;
+                               font-weight:500;font-family:system-ui,sans-serif;cursor:pointer;
+                               padding:0.35rem 1.1rem;border-radius:0.5rem;
+                               border:1px solid var(--c-accent);color:var(--c-accent);background:transparent;
+                               transition:background-color 150ms,color 150ms"
+                        onmouseover="this.style.backgroundColor='var(--c-accent)';this.style.color='#fff'"
+                        onmouseout="this.style.backgroundColor='';this.style.color='var(--c-accent)'">
+                    Request Download
+                </button>
+                <button hx-post="/videos/{{ video.youtube_id }}/ignore"
+                        hx-target="#vid-actions-{{ video.youtube_id }}"
+                        hx-swap="outerHTML"
+                        style="font-size:0.58rem;letter-spacing:0.07em;text-transform:uppercase;
+                               font-weight:500;font-family:system-ui,sans-serif;cursor:pointer;
+                               padding:0.35rem 0.9rem;border-radius:0.5rem;
+                               border:1px solid var(--c-border);color:var(--c-text3);background:transparent;
+                               transition:border-color 150ms,color 150ms"
+                        onmouseover="this.style.borderColor='var(--c-text3)';this.style.color='var(--c-text)'"
+                        onmouseout="this.style.borderColor='var(--c-border)';this.style.color='var(--c-text3)'">
+                    Ignore
+                </button>
+                {% endif %}
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Description -->
+    {% if video.description %}
+    <div style="margin-top:2.5rem;padding-top:2rem;border-top:1px solid var(--c-border)">
+        <h2 style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;
+                   color:var(--c-text4);font-family:system-ui,sans-serif;font-weight:500;margin-bottom:0.85rem">
+            Description
+        </h2>
+        <div id="desc-wrap" style="position:relative;max-height:12rem;overflow:hidden">
+            <p style="font-size:0.78rem;line-height:1.75;color:var(--c-text2);
+                      white-space:pre-wrap;font-family:system-ui,sans-serif;word-break:break-word">{{ video.description }}</p>
+        </div>
+        <button id="desc-toggle"
+                onclick="(function(){
+                    var w=document.getElementById('desc-wrap');
+                    var b=document.getElementById('desc-toggle');
+                    if(w.style.maxHeight==='none'){w.style.maxHeight='12rem';b.textContent='Show more'}
+                    else{w.style.maxHeight='none';b.textContent='Show less'}
+                })()"
+                style="margin-top:0.6rem;font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;
+                       font-weight:500;font-family:system-ui,sans-serif;color:var(--c-text4);
+                       background:none;border:none;cursor:pointer;padding:0;transition:color 150ms"
+                onmouseover="this.style.color='var(--c-text)'"
+                onmouseout="this.style.color='var(--c-text4)'">
+            Show more
+        </button>
+    </div>
+    {% elif source == 'pending' %}
+    <div style="margin-top:2.5rem;padding-top:2rem;border-top:1px solid var(--c-border)">
+        <p style="font-size:0.72rem;color:var(--c-text4);font-family:system-ui,sans-serif">
+            Description and full metadata will be available once the video is downloaded.
+        </p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

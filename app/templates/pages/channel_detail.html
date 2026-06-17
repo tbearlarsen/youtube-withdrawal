@@ -3,18 +3,6 @@
 
 {% block content %}
 
-<!-- Back link -->
-<div class="px-8 pt-6">
-    <a href="/channels"
-       class="inline-flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors"
-       style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;font-family:system-ui,sans-serif">
-        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-        </svg>
-        Channels
-    </a>
-</div>
-
 <!-- Channel header -->
 <div class="relative">
     {% if channel.channel_tvart_url %}
@@ -38,39 +26,37 @@
                 <h1 class="text-2xl text-white" style="letter-spacing:-0.01em">{{ channel.channel_name }}</h1>
                 <p class="text-gray-500 mt-0.5" style="font-size:0.63rem;letter-spacing:0.05em">
                     Last scanned {{ channel.channel_last_refresh | time_ago }}
+                    {% if channel.channel_subs %} · {{ "{:,}".format(channel.channel_subs) }} subscribers{% endif %}
                 </p>
-            </div>
-            <div class="pb-2 shrink-0 flex items-center gap-2">
-                {% include "partials/favorite_button.html" with context %}
-
-                <!-- Kebab menu -->
-                <div class="relative" id="channel-menu-wrap">
-                    <button onclick="toggleChannelMenu()"
-                            class="btn-secondary"
-                            style="padding:0.375rem 0.5rem;font-size:0.95rem;line-height:1"
-                            title="More options">
-                        ⋮
-                    </button>
-                    <div id="channel-menu"
-                         class="hidden absolute right-0 mt-1 rounded-lg overflow-hidden"
-                         style="min-width:11rem;background-color:var(--c-surface);border:1px solid var(--c-border);box-shadow:0 4px 16px rgba(0,0,0,0.2);z-index:50;top:100%">
-                        <button hx-post="/channels/{{ channel.channel_id }}/ignore-all"
-                                hx-target="#channel-action-result"
-                                hx-swap="innerHTML"
-                                onclick="document.getElementById('channel-menu').classList.add('hidden')"
-                                class="w-full text-left px-4 py-2.5 transition-colors"
-                                style="font-size:0.72rem;letter-spacing:0.05em;color:var(--c-text2);background:none;border:none;cursor:pointer;display:block"
-                                onmouseover="this.style.backgroundColor='var(--c-hover)'"
-                                onmouseout="this.style.backgroundColor=''">
-                            Ignore all pending
-                        </button>
-                    </div>
-                </div>
-                <span id="channel-action-result" class="text-xs"></span>
             </div>
         </div>
     </div>
 </div>
+
+{% if channel.channel_description %}
+<div class="px-8 pb-4" style="max-width:680px">
+    <p id="ch-desc-text"
+       style="font-size:0.72rem;line-height:1.65;color:var(--c-text3);
+              display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">
+        {{ channel.channel_description }}
+    </p>
+    <button onclick="toggleDesc()" id="ch-desc-btn"
+            style="font-size:0.65rem;color:var(--c-accent);background:none;border:none;cursor:pointer;
+                   padding:0;margin-top:0.25rem;letter-spacing:0.03em">
+        Show more
+    </button>
+</div>
+<script>
+function toggleDesc() {
+    var el = document.getElementById('ch-desc-text');
+    var btn = document.getElementById('ch-desc-btn');
+    var collapsed = el.style.webkitLineClamp === '3';
+    el.style.webkitLineClamp = collapsed ? 'unset' : '3';
+    el.style.overflow = collapsed ? 'visible' : 'hidden';
+    btn.textContent = collapsed ? 'Show less' : 'Show more';
+}
+</script>
+{% endif %}
 
 <script>
 function toggleChannelMenu() {
@@ -86,22 +72,120 @@ document.addEventListener('click', function(e) {
 
 <!-- Status tabs -->
 <div class="px-8" style="border-bottom:1px solid var(--c-border);margin-top:-0.25rem">
-    <div class="flex gap-1">
-        {% for status, label in [('pending','Videos'),('downloaded','Downloaded'),('ignore','Ignored')] %}
-        <a href="/channels/{{ channel.channel_id }}?status={{ status }}"
-           class="px-4 py-3 border-b-2 transition-colors"
-           style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;font-family:system-ui,sans-serif;font-weight:500;
-                  {% if current_status == status %}border-color:var(--c-accent);color:var(--c-text){% else %}border-color:transparent;color:var(--c-text3){% endif %}">
-            {{ label }}
-        </a>
-        {% endfor %}
+    <div class="flex items-center">
+        <div class="flex gap-1 flex-1">
+            {% for status, label in [('pending','Videos'),('downloaded','Downloaded'),('ignore','Ignored')] %}
+            <a href="/channels/{{ channel.channel_id }}?status={{ status }}"
+               class="px-4 py-3 border-b-2 transition-colors"
+               style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;font-family:system-ui,sans-serif;font-weight:500;
+                      {% if current_status == status %}border-color:var(--c-accent);color:var(--c-text){% else %}border-color:transparent;color:var(--c-text3){% endif %}">
+                {{ label }}
+            </a>
+            {% endfor %}
+        </div>
+
+        <!-- Kebab menu -->
+        <div class="relative flex items-center gap-2" id="channel-menu-wrap">
+            <span id="channel-action-result" style="font-size:0.65rem;color:var(--c-text3)"></span>
+            <button onclick="toggleChannelMenu()"
+                    class="btn-secondary"
+                    style="padding:0.3rem 0.55rem;font-size:0.95rem;line-height:1"
+                    title="More options">
+                ⋮
+            </button>
+            <div id="channel-menu"
+                 class="hidden absolute right-0 rounded-lg overflow-hidden"
+                 style="min-width:13rem;background-color:var(--c-surface);border:1px solid var(--c-border);box-shadow:0 4px 16px rgba(0,0,0,0.2);z-index:50;top:calc(100% + 0.25rem)">
+
+                {% set btn = "w-full text-left px-4 py-2.5 transition-colors" %}
+                {% set btn_style = "font-size:0.72rem;letter-spacing:0.05em;background:none;border:none;cursor:pointer;display:block;width:100%;text-align:left" %}
+
+                <!-- Auto-download toggle -->
+                <button hx-post="/channels/{{ channel.channel_id }}/auto-download"
+                        hx-vals='{"enable": "{% if is_auto_download %}false{% else %}true{% endif %}"}'
+                        hx-swap="none"
+                        onclick="document.getElementById('channel-menu').classList.add('hidden')"
+                        class="{{ btn }}"
+                        style="{{ btn_style }};display:flex;align-items:center;gap:0.5rem;
+                               color:{% if is_auto_download %}var(--c-queued){% else %}var(--c-text2){% endif %}"
+                        onmouseover="this.style.backgroundColor='var(--c-hover)'"
+                        onmouseout="this.style.backgroundColor=''">
+                    <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;
+                                 background:{% if is_auto_download %}var(--c-queued){% else %}var(--c-border){% endif %}"></span>
+                    {% if is_auto_download %}Auto-download on{% else %}Auto-download off{% endif %}
+                </button>
+
+                <!-- Favorites toggle -->
+                <button hx-post="/channels/{{ channel.channel_id }}/favorite"
+                        hx-swap="none"
+                        hx-on::after-request="window.location.reload()"
+                        onclick="document.getElementById('channel-menu').classList.add('hidden')"
+                        class="{{ btn }}"
+                        style="{{ btn_style }};color:var(--c-text2)"
+                        onmouseover="this.style.backgroundColor='var(--c-hover)'"
+                        onmouseout="this.style.backgroundColor=''">
+                    {% if is_favorite %}Remove from Favorites{% else %}Add to Favorites{% endif %}
+                </button>
+
+                <div style="height:1px;background:var(--c-border);margin:0 0.75rem"></div>
+
+                <!-- Request all pending (one-shot) -->
+                <button hx-post="/channels/{{ channel.channel_id }}/request-all"
+                        hx-swap="none"
+                        onclick="document.getElementById('channel-menu').classList.add('hidden')"
+                        class="{{ btn }}"
+                        style="{{ btn_style }};color:var(--c-text2)"
+                        onmouseover="this.style.backgroundColor='var(--c-hover)'"
+                        onmouseout="this.style.backgroundColor=''">
+                    Request all pending
+                </button>
+
+                <!-- Restore all ignored -->
+                <button hx-post="/channels/{{ channel.channel_id }}/restore-all-ignored"
+                        hx-swap="none"
+                        onclick="document.getElementById('channel-menu').classList.add('hidden')"
+                        class="{{ btn }}"
+                        style="{{ btn_style }};color:var(--c-text2)"
+                        onmouseover="this.style.backgroundColor='var(--c-hover)'"
+                        onmouseout="this.style.backgroundColor=''">
+                    Restore all ignored
+                </button>
+
+                <!-- Ignore all pending -->
+                <button hx-post="/channels/{{ channel.channel_id }}/ignore-all"
+                        hx-target="#channel-action-result"
+                        hx-swap="innerHTML"
+                        hx-confirm="Ignore all pending videos from {{ channel.channel_name }}?"
+                        onclick="document.getElementById('channel-menu').classList.add('hidden')"
+                        class="{{ btn }}"
+                        style="{{ btn_style }};color:var(--c-text2)"
+                        onmouseover="this.style.backgroundColor='var(--c-hover)'"
+                        onmouseout="this.style.backgroundColor=''">
+                    Ignore all pending
+                </button>
+
+                <div style="height:1px;background:var(--c-border);margin:0 0.75rem"></div>
+
+                <!-- Unsubscribe -->
+                <button hx-post="/channels/{{ channel.channel_id }}/unsubscribe"
+                        hx-swap="none"
+                        hx-confirm="Unsubscribe from {{ channel.channel_name }}? This will remove the channel from TubeArchivist."
+                        onclick="document.getElementById('channel-menu').classList.add('hidden')"
+                        class="{{ btn }}"
+                        style="{{ btn_style }};color:rgb(239 68 68)"
+                        onmouseover="this.style.backgroundColor='var(--c-hover)'"
+                        onmouseout="this.style.backgroundColor=''">
+                    Unsubscribe
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
 <!-- Video grid -->
 <div class="p-8">
     {% if videos %}
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4">
         {% for video in videos %}
             {% if current_status == 'downloaded' %}
                 {% include "partials/downloaded_video_card.html" %}
@@ -110,22 +194,6 @@ document.addEventListener('click', function(e) {
             {% endif %}
         {% endfor %}
     </div>
-
-    {% if paginate and paginate.last_page > 0 %}
-    <div class="mt-10 flex items-center justify-center gap-4">
-        {% if paginate.current_page > 0 %}
-        <a href="/channels/{{ channel.channel_id }}?page={{ paginate.current_page - 1 }}&status={{ current_status }}"
-           class="btn-secondary">← Previous</a>
-        {% endif %}
-        <span class="text-gray-500" style="font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;font-family:system-ui,sans-serif">
-            {{ paginate.current_page + 1 }} / {{ paginate.last_page + 1 }}
-        </span>
-        {% if paginate.current_page < paginate.last_page %}
-        <a href="/channels/{{ channel.channel_id }}?page={{ paginate.current_page + 1 }}&status={{ current_status }}"
-           class="btn-secondary">Next →</a>
-        {% endif %}
-    </div>
-    {% endif %}
 
     {% else %}
     <div class="flex flex-col items-center justify-center mt-16 text-center">

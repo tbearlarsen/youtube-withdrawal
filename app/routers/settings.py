@@ -9,6 +9,17 @@ from app.templating import templates
 
 router = APIRouter(prefix="/settings")
 
+_SB_CATEGORIES = [
+    ("sponsor",        "Sponsor"),
+    ("selfpromo",      "Self-promo"),
+    ("interaction",    "Interaction"),
+    ("intro",          "Intro"),
+    ("outro",          "Outro"),
+    ("preview",        "Preview"),
+    ("music_offtopic", "Non-music"),
+    ("filler",         "Filler"),
+]
+
 
 @router.get("")
 async def settings_page(request: Request):
@@ -18,12 +29,16 @@ async def settings_page(request: Request):
         ta_config = await ta.get_ta_config()
         subs = ta_config.get("subscriptions", {})
         dl = ta_config.get("downloads", {})
-        shorts_enabled = (subs.get("shorts_channel_size") or 0) > 0
-        streams_enabled = (subs.get("live_channel_size") or 0) > 0
+        channel_size = subs.get("channel_size", 50) or 50
+        shorts_size  = subs.get("shorts_channel_size", 0) or 0
+        live_size    = subs.get("live_channel_size", 0) or 0
+        sb_categories = dl.get("sb_categories") or []
     except Exception:
         dl = {}
-        shorts_enabled = None
-        streams_enabled = None
+        channel_size = 50
+        shorts_size  = 0
+        live_size    = 0
+        sb_categories = []
 
     try:
         task_results = await ta.get_task_status("update_subscribed")
@@ -32,16 +47,25 @@ async def settings_page(request: Request):
     except Exception:
         last_scan = None
 
+    try:
+        scan_schedule = await ta.get_schedule("update_subscribed")
+    except Exception:
+        scan_schedule = None
+
     return templates.TemplateResponse(
         request,
         "pages/settings.html",
         {
             "active_page": "settings",
-            "page_size": current.get("page_size", 60),
-            "scan_interval_minutes": current.get("scan_interval_minutes", 30),
+            "active_section": "settings",
+            "watch_url_value": current.get("watch_url", ""),
             "last_scan": last_scan,
-            "shorts_enabled": shorts_enabled,
-            "streams_enabled": streams_enabled,
+            "scan_schedule": scan_schedule,
+            "channel_size": channel_size,
+            "shorts_size":  shorts_size,
+            "live_size":    live_size,
+            "sb_categories": sb_categories,
+            "sb_all_categories": _SB_CATEGORIES,
             "dl": dl,
         },
     )
@@ -125,30 +149,32 @@ async def scan_subscriptions(request: Request):
         )
 
 
-@router.post("/vid-type-toggle")
-async def vid_type_toggle(request: Request, vid_type: str = Form(...), enabled: str = Form(...)):
+@router.post("/subscription-sizes")
+async def save_subscription_sizes(
+    request: Request,
+    channel_size: int = Form(50),
+    shorts_size:  int = Form(0),
+    live_size:    int = Form(0),
+):
     ta = request.app.state.ta
-    is_enabled = enabled == "true"
-    size = 50 if is_enabled else 0
-    key = "shorts_channel_size" if vid_type == "shorts" else "live_channel_size"
-    label = "Shorts" if vid_type == "shorts" else "Streams"
     try:
-        await ta.update_ta_config({"subscriptions": {key: size}})
-        state = "enabled" if is_enabled else "disabled"
-        color = "text-green-400" if is_enabled else "text-gray-400"
-        return HTMLResponse(
-            f'<span class="{color} text-xs font-medium">{label} {state}</span>'
-        )
+        await ta.update_ta_config({
+            "subscriptions": {
+                "channel_size":        max(0, channel_size),
+                "shorts_channel_size": max(0, shorts_size),
+                "live_channel_size":   max(0, live_size),
+            }
+        })
+        return HTMLResponse('<span class="text-green-400 text-xs font-medium">Saved</span>')
     except Exception:
-        return HTMLResponse(
-            '<span class="text-red-400 text-xs font-medium">Update failed</span>'
-        )
+        return HTMLResponse('<span class="text-red-400 text-xs font-medium">Save failed</span>')
 
 
 @router.post("/downloads")
 async def save_downloads(
     request: Request,
     integrate_sponsorblock: str = Form("false"),
+    sb_categories: list[str] = Form(default=[]),
     autodelete_days: str = Form(""),
     subtitle: str = Form(""),
     subtitle_source: str = Form(""),
@@ -177,6 +203,7 @@ async def save_downloads(
     payload = {
         "downloads": {
             "integrate_sponsorblock": _bool(integrate_sponsorblock),
+            "sb_categories": sb_categories,
             "autodelete_days": _int(autodelete_days),
             "subtitle": _str(subtitle),
             "subtitle_source": _str(subtitle_source),
@@ -204,21 +231,24 @@ async def save_downloads(
         )
 
 
-@router.post("/page-size")
-async def save_page_size(page_size: int = Form(...)):
-    page_size = max(10, min(200, page_size))
-    app_settings.set("page_size", page_size)
+@router.post("/scan-schedule")
+async def save_scan_schedule(request: Request, schedule: str = Form("")):
+    ta = request.app.state.ta
+    try:
+        if schedule:
+            await ta.set_schedule("update_subscribed", schedule)
+        else:
+            await ta.delete_schedule("update_subscribed")
+        return HTMLResponse('<span class="text-green-400 text-xs font-medium">Saved</span>')
+    except Exception:
+        return HTMLResponse('<span class="text-red-400 text-xs font-medium">Save failed</span>')
+
+
+@router.post("/watch-url")
+async def save_watch_url(url: str = Form("")):
+    app_settings.set("watch_url", url.strip())
     return HTMLResponse(
-        f'<span class="text-green-400 text-xs font-medium">Saved — showing {page_size} per page</span>'
+        '<span class="text-green-400 text-xs font-medium">Saved</span>'
     )
 
 
-@router.post("/scan-interval")
-async def save_scan_interval(interval: int = Form(...)):
-    app_settings.set("scan_interval_minutes", interval if interval > 0 else None)
-    if interval > 0:
-        label = f"{interval} min" if interval < 60 else f"{interval // 60}h"
-        msg = f"Scanning every {label}"
-    else:
-        msg = "Auto-scan disabled"
-    return HTMLResponse(f'<span class="text-green-400 text-xs font-medium">{msg}</span>')

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}All Videos — YouTube Withdrawal{% endblock %}
+
+{% block content %}
+<div class="p-8">
+
+    <div class="flex items-end justify-between mb-8" style="border-bottom:1px solid var(--c-border);padding-bottom:1.5rem">
+        <div>
+            <h1 class="text-2xl text-white" style="letter-spacing:-0.01em">All Videos</h1>
+            {% if videos %}
+            <p class="text-gray-500 mt-1" style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase">
+                {{ videos | length }} video{{ 's' if videos | length != 1 }}
+            </p>
+            {% endif %}
+        </div>
+        {% if sort_options is defined %}
+        <div class="flex items-center gap-2 shrink-0 pb-0.5">
+            {% for key, label in sort_options.items() %}
+            <a href="/pending?sort={{ key }}"
+               style="font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;padding:0.3rem 0.7rem;
+                      border-radius:999px;text-decoration:none;transition:background-color 120ms,color 120ms;
+                      {% if current_sort == key %}
+                      background-color:var(--c-hover);color:var(--c-text);font-weight:500
+                      {% else %}
+                      color:var(--c-text4)
+                      {% endif %}">
+                {{ label }}
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    {% if videos %}
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4">
+        {% for video in videos %}
+            {% include "partials/video_card.html" %}
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="flex flex-col items-center justify-center mt-24 text-center">
+        <p style="font-family:Georgia,'Times New Roman',serif;font-size:1.1rem;color:var(--c-text3)">Nothing pending</p>
+        <p class="mt-2" style="font-size:0.75rem;color:var(--c-text4)">TubeArchivist will populate this after a subscription scan.</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

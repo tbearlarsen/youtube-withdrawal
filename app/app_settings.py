@@ -3,8 +3,8 @@ from pathlib import Path
 
 _FILE = Path("data/settings.json")
 _DEFAULTS = {
-    "page_size": 60,
-    "scan_interval_minutes": 30,
+    "watch_url": "",
+    "home_limit": 200,
 }
 
 

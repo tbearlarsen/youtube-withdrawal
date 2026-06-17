@@ -30,7 +30,7 @@ async def queue_page(request: Request):
     return templates.TemplateResponse(
         request,
         "pages/queue.html",
-        {"videos": videos, "total": len(videos), "active_page": "queue"},
+        {"videos": videos, "total": len(videos), "active_page": "queue", "active_section": "library"},
     )
 
 

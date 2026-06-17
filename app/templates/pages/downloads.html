@@ -8,32 +8,20 @@
     <div class="flex items-end justify-between mb-8" style="border-bottom:1px solid var(--c-border);padding-bottom:1.5rem">
         <div>
             <h1 class="text-2xl text-white" style="letter-spacing:-0.01em">Downloads</h1>
+            {% if videos %}
             <p class="text-gray-500 mt-1" style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase">
-                {% if paginate %}{{ paginate.total_hits }} video{{ 's' if paginate.total_hits != 1 }}{% endif %}
+                {{ videos | length }} video{{ 's' if videos | length != 1 }}
             </p>
+            {% endif %}
         </div>
     </div>
 
     {% if videos %}
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4">
         {% for video in videos %}
             {% include "partials/downloaded_video_card.html" %}
         {% endfor %}
     </div>
-
-    {% if paginate and paginate.last_page > 0 %}
-    <div class="mt-10 flex items-center justify-center gap-4">
-        {% if paginate.current_page > 0 %}
-        <a href="/downloads?page={{ paginate.current_page - 1 }}" class="btn-secondary">← Previous</a>
-        {% endif %}
-        <span class="text-gray-500" style="font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;font-family:system-ui,sans-serif">
-            {{ paginate.current_page + 1 }} / {{ paginate.last_page + 1 }}
-        </span>
-        {% if paginate.current_page < paginate.last_page %}
-        <a href="/downloads?page={{ paginate.current_page + 1 }}" class="btn-secondary">Next →</a>
-        {% endif %}
-    </div>
-    {% endif %}
 
     {% else %}
     <div class="flex flex-col items-center justify-center mt-24 text-center">

@@ -17,5 +17,6 @@ async def search_page(request: Request, q: str = ""):
             "query": q,
             "results": results,
             "active_page": "search",
+            "active_section": "search",
         },
     )
