@@ -13,3 +13,7 @@ venv/
 
 # macOS
 .DS_Store
+
+# Unrelated local content
+.misc/
+.claude/
