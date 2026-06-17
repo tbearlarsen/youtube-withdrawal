@@ -3,6 +3,7 @@ from urllib.parse import urlparse
 
 from fastapi.templating import Jinja2Templates
 from app import app_settings
+from app.config import settings as app_config
 
 templates = Jinja2Templates(directory="app/templates")
 
@@ -57,3 +58,4 @@ templates.env.filters["ta_thumb"] = _ta_thumb
 templates.env.filters["format_published"] = _format_published
 templates.env.filters["time_ago"] = _time_ago
 templates.env.globals["watch_url"] = lambda: app_settings.get("watch_url") or ""
+templates.env.globals["ta_url"] = app_config.ta_url.rstrip("/")
