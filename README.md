@@ -29,7 +29,7 @@ In TubeArchivist → Settings → User → API key.
 ```yaml
 services:
   youtube-withdrawal:
-    image: ghcr.io/your-username/youtube-withdrawal:latest
+    image: ghcr.io/tbearlarsen/youtube-withdrawal:latest
     container_name: youtube-withdrawal
     restart: unless-stopped
     ports:
@@ -52,7 +52,7 @@ If TubeArchivist is on a different host, set `TA_URL` to its external address (e
 ### 3. Build from source
 
 ```bash
-git clone https://github.com/your-username/youtube-withdrawal.git
+git clone https://github.com/tbearlarsen/youtube-withdrawal.git
 cd youtube-withdrawal
 cp .env.example .env
 # Edit .env and set TA_API_KEY
