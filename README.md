@@ -139,7 +139,8 @@ docker compose up -d --build
 | Variable | Required | Default | Description |
 |---|---|---|---|
 | `TA_API_KEY` | Yes | — | TubeArchivist API key. Find it in TubeArchivist → Settings → User. |
-| `TA_URL` | No | `http://tubearchivist:8000` | Base URL of your TubeArchivist instance. |
+| `TA_URL` | No | `http://tubearchivist:8000` | URL used by the app server to reach TubeArchivist (server-to-server). |
+| `TA_PUBLIC_URL` | No | same as `TA_URL` | Browser-facing URL for the "Open TubeArchivist" link in Settings. Set this when `TA_URL` is a Docker-internal address (e.g. `http://tubearchivist:8000`) that your browser can't reach. |
 
 ### In-app settings
 
