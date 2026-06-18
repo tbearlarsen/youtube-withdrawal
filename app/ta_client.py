@@ -5,6 +5,17 @@ import httpx
 from app.config import settings
 
 
+def _dedup_by_id(items: list[dict]) -> list[dict]:
+    seen: set[str] = set()
+    out: list[dict] = []
+    for v in items:
+        vid_id = v.get("youtube_id")
+        if vid_id and vid_id not in seen:
+            seen.add(vid_id)
+            out.append(v)
+    return out
+
+
 class TAClient:
     def __init__(self):
         self._client = httpx.AsyncClient(
@@ -131,7 +142,7 @@ class TAClient:
             ])
             for r in rest:
                 items.extend(r.get("data", []))
-        return items
+        return _dedup_by_id(items)
 
     async def get_all_download_items(
         self,
@@ -149,7 +160,7 @@ class TAClient:
             ])
             for r in rest:
                 items.extend(r.get("data", []))
-        return items
+        return _dedup_by_id(items)
 
     async def get_all_videos(self, channel_id: str | None = None) -> list[dict]:
         first = await self.get_video_list(channel_id=channel_id, page=0, sort="published", order="desc")
@@ -162,7 +173,7 @@ class TAClient:
             ])
             for r in rest:
                 items.extend(r.get("data", []))
-        return items
+        return _dedup_by_id(items)
 
     async def get_video_list(
         self,
