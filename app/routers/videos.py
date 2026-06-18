@@ -101,5 +101,10 @@ async def restore_video(request: Request, video_id: str):
 
 @router.delete("/videos/{video_id}")
 async def delete_video(request: Request, video_id: str):
-    await request.app.state.ta.delete_video(video_id)
+    ta = request.app.state.ta
+    await ta.delete_video(video_id)
+    try:
+        await ta.ignore_video(video_id)
+    except Exception:
+        pass
     return HTMLResponse("")
