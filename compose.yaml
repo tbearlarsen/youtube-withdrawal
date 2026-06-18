@@ -8,6 +8,7 @@ services:
     environment:
       - TA_URL=http://tubearchivist:8000
       - TA_API_KEY=${TA_API_KEY}
+      - TA_PUBLIC_URL=${TA_PUBLIC_URL}
     volumes:
       - ./data:/app/data
     networks:
