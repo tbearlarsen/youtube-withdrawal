@@ -17,3 +17,4 @@ venv/
 # Unrelated local content
 .misc/
 .claude/
+todo.md

@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 
-from app import auto_download as auto_dl, requested as req_tracker
+from app import auto_download as auto_dl, requested as req_tracker, deleted as del_tracker
 from app.ta_client import TAClient
 from app.routers import channels, videos, queue, home, settings, downloads, pending
 
@@ -35,13 +35,14 @@ async def _auto_request_loop(app: FastAPI) -> None:
             continue
         try:
             already = req_tracker.get_all()
+            deleted = del_tracker.get_all()
             for channel_id in auto_channels:
                 pending = await app.state.ta.get_all_download_items(
                     channel_id=channel_id, status="pending"
                 )
                 for video in pending:
                     vid_id = video.get("youtube_id")
-                    if vid_id and vid_id not in already:
+                    if vid_id and vid_id not in already and vid_id not in deleted:
                         await app.state.ta.request_video(vid_id)
                         req_tracker.add(vid_id)
         except Exception:

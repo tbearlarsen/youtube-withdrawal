@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse
 
 from app import auto_download as auto_dl
 from app.favorites import is_favorite
-from app import stats, requested as req_tracker
+from app import stats, requested as req_tracker, deleted as del_tracker
 from app.templating import templates
 
 router = APIRouter()
@@ -104,6 +104,7 @@ async def restore_video(request: Request, video_id: str):
 async def delete_video(request: Request, video_id: str):
     ta = request.app.state.ta
     await ta.delete_video(video_id)
+    del_tracker.add(video_id)
     try:
         await ta.ignore_video(video_id)
     except Exception:
