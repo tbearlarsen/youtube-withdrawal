@@ -75,6 +75,19 @@
             <span style="font-size:0.55rem;letter-spacing:0.07em;text-transform:uppercase;font-weight:500;font-family:system-ui,sans-serif;color:var(--c-queued)">
                 {% if video.status == 'downloading' %}Downloading{% else %}Requested{% endif %}
             </span>
+            {% if video.status != 'downloading' %}
+            <button hx-post="/videos/{{ video.youtube_id }}/ignore"
+                    hx-target="closest .video-card"
+                    hx-swap="outerHTML"
+                    title="Cancel request"
+                    style="margin-left:auto;cursor:pointer;padding:0.28rem;border-radius:50%;border:none;background:transparent;color:var(--c-text4);display:flex;align-items:center;flex-shrink:0;transition:color 150ms,background-color 150ms"
+                    onmouseover="this.style.color='var(--c-text)';this.style.backgroundColor='var(--c-hover)'"
+                    onmouseout="this.style.color='var(--c-text4)';this.style.backgroundColor=''">
+                <svg style="width:11px;height:11px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+            {% endif %}
 
             {% else %}
             <span style="font-size:0.58rem;color:var(--c-text4);font-family:system-ui,sans-serif">
