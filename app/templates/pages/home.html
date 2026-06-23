@@ -13,7 +13,7 @@
         <a href="/channels" class="btn-outline mt-6">Browse Channels</a>
     </div>
 
-    {% elif not videos and not downloaded_videos %}
+    {% elif not videos %}
     <div class="flex flex-col items-center justify-center mt-24 text-center">
         <p class="text-gray-300" style="font-family:Georgia,'Times New Roman',serif;font-size:1.1rem">All caught up</p>
         <p class="text-gray-500 mt-2" style="font-size:0.75rem">No pending or downloaded videos from your favorite channels.</p>
@@ -21,10 +21,9 @@
 
     {% else %}
 
-    {% if videos %}
     <div class="flex items-center justify-between mb-6">
         <p style="font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--c-text4)">
-            {% if capped %}Showing {{ videos | length }} of {{ total }}{% else %}{{ total }} pending video{{ 's' if total != 1 }}{% endif %}
+            {% if capped %}Showing {{ videos | length }} of {{ total }}{% else %}{{ total }} video{{ 's' if total != 1 }}{% endif %}
             from your favorites
         </p>
         {% if weekly_requests %}
@@ -33,31 +32,22 @@
         </p>
         {% endif %}
     </div>
+
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4">
         {% for video in videos %}
             {% set show_channel = true %}
-            {% include "partials/video_card.html" %}
+            {% if video._type == "downloaded" %}
+                {% include "partials/downloaded_video_card.html" %}
+            {% else %}
+                {% include "partials/video_card.html" %}
+            {% endif %}
         {% endfor %}
     </div>
+
     {% if capped %}
     <p class="mt-8 text-center" style="font-size:0.65rem;color:var(--c-text4)">
-        Showing the {{ videos | length }} most recent. <a href="/pending" style="color:var(--c-accent);text-decoration:none">View all {{ total }}</a>
+        Showing the {{ videos | length }} most recent. <a href="/pending" style="color:var(--c-accent);text-decoration:none">View all pending</a>
     </p>
-    {% endif %}
-    {% endif %}
-
-    {% if downloaded_videos %}
-    <div class="{% if videos %}mt-12{% endif %} flex items-center justify-between mb-6">
-        <p style="font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--c-text4)">
-            {{ total_downloaded }} downloaded from your favorites
-        </p>
-    </div>
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4">
-        {% for video in downloaded_videos %}
-            {% set show_channel = true %}
-            {% include "partials/downloaded_video_card.html" %}
-        {% endfor %}
-    </div>
     {% endif %}
 
     {% endif %}

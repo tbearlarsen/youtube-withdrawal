@@ -67,21 +67,23 @@ async def home_page(request: Request):
             seen.add(vid_id)
             downloaded_videos.append(v)
 
-    pending_videos.sort(key=lambda v: v.get("published", "0"), reverse=True)
-    downloaded_videos.sort(key=lambda v: v.get("published", "0"), reverse=True)
+    for v in pending_videos:
+        v["_type"] = "pending"
+    for v in downloaded_videos:
+        v["_type"] = "downloaded"
 
-    total_pending = len(pending_videos)
-    total_downloaded = len(downloaded_videos)
+    all_videos = pending_videos + downloaded_videos
+    all_videos.sort(key=lambda v: v.get("published", "0"), reverse=True)
+
+    total = len(all_videos)
 
     return templates.TemplateResponse(
         request,
         "pages/home.html",
         {
-            "videos": pending_videos[:_HOME_LIMIT],
-            "total": total_pending,
-            "capped": total_pending > _HOME_LIMIT,
-            "downloaded_videos": downloaded_videos[:_HOME_LIMIT],
-            "total_downloaded": total_downloaded,
+            "videos": all_videos[:_HOME_LIMIT],
+            "total": total,
+            "capped": total > _HOME_LIMIT,
             "no_favorites": False,
             "active_page": "home",
             "active_section": "home",

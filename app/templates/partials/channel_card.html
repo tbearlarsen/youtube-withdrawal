@@ -40,13 +40,8 @@
                     </span>
                     {% endif %}
                 </div>
-                {% set count = pending_counts.get(channel.channel_id, 0) if pending_counts is defined else 0 %}
-                {% if count > 0 %}
-                <span class="text-fixed-white"
-                      style="font-size:0.57rem;font-weight:600;background:var(--c-accent);border-radius:999px;
-                             padding:0.1rem 0.45rem;line-height:1.5;font-family:system-ui,sans-serif">
-                    {{ count }}
-                </span>
+                {% if pending_counts is defined and pending_counts.get(channel.channel_id, 0) > 0 %}
+                <span style="width:7px;height:7px;border-radius:50%;background:var(--c-accent);flex-shrink:0;display:inline-block"></span>
                 {% endif %}
             </div>
         </div>

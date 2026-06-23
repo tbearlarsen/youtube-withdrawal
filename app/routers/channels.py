@@ -183,19 +183,6 @@ async def favorite_channel(request: Request, channel_id: str):
     )
 
 
-@router.get("/channels/pending-total")
-async def pending_total(request: Request):
-    try:
-        data = await request.app.state.ta.get_download_list(status="pending")
-        total = data.get("paginate", {}).get("total_hits", 0)
-    except Exception:
-        total = 0
-    if not total:
-        return HTMLResponse("")
-    return HTMLResponse(
-        f'<span class="sidebar-label ml-auto text-fixed-white" style="font-size:0.6rem;font-weight:600;background:var(--c-accent);border-radius:999px;padding:0.1rem 0.45rem;line-height:1.6;font-family:system-ui,sans-serif">{total}</span>'
-    )
-
 
 @router.post("/channels/{channel_id}/card-star")
 async def card_star(request: Request, channel_id: str):
