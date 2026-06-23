@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request
 
-from app import requested as req_tracker
+from app import requested as req_tracker, deleted as del_tracker
 from app.templating import templates
 
 router = APIRouter()
@@ -16,7 +16,11 @@ _SORT_OPTIONS = {
 async def pending_page(request: Request, sort: str = "newest"):
     if sort not in _SORT_OPTIONS:
         sort = "newest"
-    videos = await request.app.state.ta.get_all_pending()
+    deleted = del_tracker.get_all()
+    videos = [
+        v for v in await request.app.state.ta.get_all_pending()
+        if v.get("youtube_id") not in deleted
+    ]
 
     if sort == "oldest":
         videos.sort(key=lambda v: v.get("published", "0"))

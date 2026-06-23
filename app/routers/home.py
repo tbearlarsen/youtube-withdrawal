@@ -2,7 +2,7 @@ import asyncio
 
 from fastapi import APIRouter, Request
 
-from app import requested as req_tracker
+from app import requested as req_tracker, deleted as del_tracker
 from app.favorites import get_favorites
 from app.stats import get_weekly_requests
 from app.templating import templates
@@ -45,10 +45,13 @@ async def home_page(request: Request):
     pending_results = all_results[:len(favorite_ids)]
     downloaded_results = all_results[len(favorite_ids):]
 
+    deleted = del_tracker.get_all()
     pending_videos = []
     for result in pending_results:
         if not isinstance(result, Exception):
-            pending_videos.extend(result)
+            for v in result:
+                if v.get("youtube_id") not in deleted:
+                    pending_videos.append(v)
 
     raw_downloaded = []
     for result in downloaded_results:

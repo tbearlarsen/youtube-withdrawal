@@ -14,11 +14,16 @@ router = APIRouter()
 @router.get("/channels/{channel_id}")
 async def channel_detail(request: Request, channel_id: str, status: str = "pending"):
     ta = request.app.state.ta
-    channel_data, videos = await asyncio.gather(
+    channel_data, raw_videos = await asyncio.gather(
         ta.get_channel(channel_id),
         ta.get_all_videos(channel_id=channel_id) if status == "downloaded"
         else ta.get_all_download_items(channel_id=channel_id, status=status),
     )
+    if status == "pending":
+        deleted = del_tracker.get_all()
+        videos = [v for v in raw_videos if v.get("youtube_id") not in deleted]
+    else:
+        videos = raw_videos
     return templates.TemplateResponse(
         request,
         "pages/channel_detail.html",
@@ -105,8 +110,5 @@ async def delete_video(request: Request, video_id: str):
     ta = request.app.state.ta
     await ta.delete_video(video_id)
     del_tracker.add(video_id)
-    try:
-        await ta.ignore_video(video_id)
-    except Exception:
-        pass
+    await ta.force_ignore_video(video_id)
     return HTMLResponse("")

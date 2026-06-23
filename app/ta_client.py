@@ -88,6 +88,28 @@ class TAClient:
         )
         r.raise_for_status()
 
+    async def force_ignore_video(self, video_id: str) -> None:
+        """Ensure a video is ignored in TA's download queue.
+
+        Downloaded videos are removed from the queue after download, so a plain
+        ignore call returns 404. In that case we add the video back via URL and
+        immediately ignore it.
+        """
+        r = await self._client.post(
+            f"/api/download/{video_id}/", json={"status": "ignore"}
+        )
+        if r.status_code < 400:
+            return
+        # No queue entry exists — add via URL then ignore
+        try:
+            url = f"https://www.youtube.com/watch?v={video_id}"
+            await self._client.post("/api/download/", json={"data": url})
+            await self._client.post(
+                f"/api/download/{video_id}/", json={"status": "ignore"}
+            )
+        except Exception:
+            pass
+
     async def restore_video(self, video_id: str) -> None:
         r = await self._client.post(
             f"/api/download/{video_id}/", json={"status": "pending"}
