@@ -11,18 +11,29 @@ from app.routers import channels, videos, queue, home, settings, downloads, pend
 
 
 async def _reconcile_requested(ta: TAClient) -> None:
-    """Remove stale entries from requested.json that are no longer in TA's pending queue."""
-    requested = req_tracker.get_all()
-    if not requested:
-        return
+    """Remove stale req_tracker entries; re-ignore any deleted videos that reappeared in pending."""
     try:
         pending_items = await ta.get_all_pending()
-        pending_ids = {v["youtube_id"] for v in pending_items}
-        for vid_id in list(requested):
-            if vid_id not in pending_ids:
-                req_tracker.remove(vid_id)
     except Exception:
-        pass
+        return
+
+    pending_ids = {v["youtube_id"] for v in pending_items}
+
+    # Clean up req_tracker
+    for vid_id in list(req_tracker.get_all()):
+        if vid_id not in pending_ids:
+            req_tracker.remove(vid_id)
+
+    # If a deleted video reappeared in TA's pending queue (ES lag / scan race),
+    # push the ignore again now that the queue entry exists
+    deleted = del_tracker.get_all()
+    for item in pending_items:
+        vid_id = item.get("youtube_id")
+        if vid_id and vid_id in deleted:
+            try:
+                await ta.ignore_video(vid_id)
+            except Exception:
+                pass
 
 
 async def _auto_request_loop(app: FastAPI) -> None:
