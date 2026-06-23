@@ -103,6 +103,7 @@ async def restore_video(request: Request, video_id: str):
 async def delete_video(request: Request, video_id: str):
     ta = request.app.state.ta
     await ta.delete_video(video_id)
+    req_tracker.remove(video_id)
     try:
         await ta.ignore_video(video_id)
     except Exception:

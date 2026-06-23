@@ -234,6 +234,43 @@
         #page-body { padding-top: 52px; min-height: 100vh; }
         #page-body.has-sidebar { display: flex; }
         #lib-content { flex: 1; min-width: 0; }
+
+        /* ── Mobile bottom nav ───────────────────────── */
+        #mobile-lib-nav {
+            display: none;
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            height: 56px;
+            background-color: color-mix(in srgb, var(--c-bg) 88%, transparent);
+            backdrop-filter: blur(24px) saturate(1.4);
+            -webkit-backdrop-filter: blur(24px) saturate(1.4);
+            border-top: 1px solid var(--c-border);
+            z-index: 90;
+            justify-content: space-around;
+            align-items: center;
+        }
+        .mobile-lib-item {
+            display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+            flex: 1; padding: 0.5rem 0;
+            text-decoration: none;
+            color: var(--c-text3);
+            font-size: 0.48rem; letter-spacing: 0.08em; text-transform: uppercase;
+            font-weight: 600; font-family: system-ui, sans-serif;
+            transition: color 150ms;
+        }
+        .mobile-lib-item.active { color: var(--c-text); }
+        .mobile-lib-item svg { width: 22px; height: 22px; }
+
+        /* ── Mobile breakpoint (< 640px) ────────────── */
+        @media (max-width: 639px) {
+            #lib-sidebar { display: none !important; }
+            #mobile-lib-nav { display: flex !important; }
+            #page-body.has-sidebar { padding-bottom: 56px; }
+            #lib-content { width: 100%; }
+            #lib-content .p-8 { padding: 1rem !important; }
+            #settings-outer { padding: 1rem 0.75rem !important; }
+            #settings-nav { display: none !important; }
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -318,6 +355,36 @@
     <div id="lib-content">
         {% block content %}{% endblock %}
     </div>
+
+    {% if active_section == 'library' %}
+    <!-- Mobile bottom nav (hidden on desktop via CSS) -->
+    <nav id="mobile-lib-nav">
+        <a href="/channels" class="mobile-lib-item {% if active_page == 'channels' %}active{% endif %}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+            </svg>
+            Channels
+        </a>
+        <a href="/pending" class="mobile-lib-item {% if active_page == 'pending' %}active{% endif %}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 6h16M4 10h16M4 14h10"/>
+            </svg>
+            All Videos
+        </a>
+        <a href="/queue" class="mobile-lib-item {% if active_page == 'queue' %}active{% endif %}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            Queue
+        </a>
+        <a href="/downloads" class="mobile-lib-item {% if active_page == 'downloads' %}active{% endif %}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2zm7 5v6m0 0l-3-3m3 3l3-3"/>
+            </svg>
+            Downloads
+        </a>
+    </nav>
+    {% endif %}
 
 </div>
 

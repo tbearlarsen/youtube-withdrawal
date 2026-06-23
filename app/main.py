@@ -26,9 +26,10 @@ async def _reconcile_requested(ta: TAClient) -> None:
 
 
 async def _auto_request_loop(app: FastAPI) -> None:
-    """Every 5 minutes, request pending videos from auto-download channels."""
+    """Every 5 minutes: reconcile requested tracker, then request pending videos from auto-download channels."""
     while True:
         await asyncio.sleep(5 * 60)
+        await _reconcile_requested(app.state.ta)
         auto_channels = auto_dl.get_all()
         if not auto_channels:
             continue
