@@ -5,7 +5,7 @@ import re
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse
 
-from app import auto_download as auto_dl
+from app import auto_download as auto_dl, deleted as del_tracker
 from app.favorites import toggle_favorite, is_favorite, get_favorites
 from app.templating import templates
 
@@ -223,13 +223,15 @@ async def toggle_auto_download(request: Request, channel_id: str, enable: str = 
         ta = request.app.state.ta
         from app import requested as req_tracker
         already = req_tracker.get_all()
+        deleted = del_tracker.get_all()
         try:
             pending_videos = await ta.get_all_download_items(channel_id=channel_id, status="pending")
             for video in pending_videos:
                 vid_id = video.get("youtube_id")
-                if vid_id and vid_id not in already:
+                if vid_id and vid_id not in already and vid_id not in deleted:
                     await ta.request_video(vid_id)
                     req_tracker.add(vid_id)
+                    already.add(vid_id)
         except Exception:
             pass
 
@@ -252,13 +254,15 @@ async def request_all_pending(request: Request, channel_id: str):
     ta = request.app.state.ta
     from app import requested as req_tracker
     already = req_tracker.get_all()
+    deleted = del_tracker.get_all()
     try:
         pending_videos = await ta.get_all_download_items(channel_id=channel_id, status="pending")
         for video in pending_videos:
             vid_id = video.get("youtube_id")
-            if vid_id and vid_id not in already:
+            if vid_id and vid_id not in already and vid_id not in deleted:
                 await ta.request_video(vid_id)
                 req_tracker.add(vid_id)
+                already.add(vid_id)
     except Exception:
         pass
     from fastapi.responses import Response as FastAPIResponse
@@ -274,6 +278,7 @@ async def restore_all_ignored(request: Request, channel_id: str):
             '<span style="font-size:0.72rem;color:var(--c-text4)">Nothing to restore</span>'
         )
     await asyncio.gather(*[ta.restore_video(v["youtube_id"]) for v in ignored], return_exceptions=True)
+    del_tracker.remove_many({v["youtube_id"] for v in ignored})
     from fastapi.responses import Response as FastAPIResponse
     return FastAPIResponse(headers={"HX-Refresh": "true"})
 

@@ -191,7 +191,7 @@ async def save_downloads(
             "subtitle": _str(subtitle),
             "subtitle_source": _str(subtitle_source),
             "subtitle_index": _bool(subtitle_index),
-            "comment_max": _str(comment_max),
+            "comment_max": _int(comment_max),
             "comment_sort": comment_sort or "top",
             "integrate_ryd": _bool(integrate_ryd),
             "add_metadata": _bool(add_metadata),

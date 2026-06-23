@@ -24,5 +24,11 @@ def add(video_id: str) -> None:
     _save(ids)
 
 
+def remove_many(video_ids: set[str]) -> None:
+    ids = _load()
+    ids -= video_ids
+    _save(ids)
+
+
 def get_all() -> set[str]:
     return _load()

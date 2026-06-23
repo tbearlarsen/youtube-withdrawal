@@ -45,6 +45,7 @@ async def _auto_request_loop(app: FastAPI) -> None:
                     if vid_id and vid_id not in already and vid_id not in deleted:
                         await app.state.ta.request_video(vid_id)
                         req_tracker.add(vid_id)
+                        already.add(vid_id)
         except Exception:
             pass
 
