@@ -78,6 +78,7 @@ async def request_video(request: Request, video_id: str):
 async def ignore_video(request: Request, video_id: str):
     ta = request.app.state.ta
     await ta.ignore_video(video_id)
+    req_tracker.remove(video_id)
     video = await ta.get_download_item(video_id)
     if video is None:
         video = {"youtube_id": video_id, "status": "ignore"}
@@ -103,7 +104,6 @@ async def restore_video(request: Request, video_id: str):
 async def delete_video(request: Request, video_id: str):
     ta = request.app.state.ta
     await ta.delete_video(video_id)
-    req_tracker.remove(video_id)
     try:
         await ta.ignore_video(video_id)
     except Exception:

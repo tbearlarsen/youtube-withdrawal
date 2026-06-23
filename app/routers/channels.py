@@ -240,6 +240,9 @@ async def toggle_auto_download(request: Request, channel_id: str, enable: str = 
 @router.post("/channels/{channel_id}/unsubscribe")
 async def unsubscribe_channel(request: Request, channel_id: str):
     await request.app.state.ta.unsubscribe_channel(channel_id)
+    if is_favorite(channel_id):
+        toggle_favorite(channel_id)
+    auto_dl.disable(channel_id)
     from fastapi.responses import Response as FastAPIResponse
     return FastAPIResponse(headers={"HX-Redirect": "/channels"})
 
