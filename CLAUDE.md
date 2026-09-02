@@ -1,0 +1,64 @@
+# Agent Instructions
+
+## What this project is
+
+YouTube Withdrawal is a deliberate viewing layer on top of [TubeArchivist](https://github.com/tubearchivist/tubearchivist). It replaced ytdl-sub's passive, automatic-download-everything approach (now fully retired) with an intentional browse-and-request workflow: you see what's pending from your subscribed channels and choose what actually gets downloaded. TubeArchivist remains the engine — all downloading, storage, and indexing is its job. This app is a control layer, not a second database.
+
+**The actual point of this project, stated once so it doesn't get designed away by accident:** the goal is reducing passive YouTube consumption. The browse → request friction is deliberate, not a UX gap to smooth over. Don't add auto-features (auto-download-everything, a "just download the whole channel" shortcut with no per-video choice) that undermine that premise — `auto_download.py`'s existing per-channel toggle is already a deliberate exception (opt-in, per channel, not a global default), not a precedent for adding more.
+
+This is a product, not a process-automation tool — most of the actual work here is feature/UX judgment calls, not repeatable workflows. `directives/` stays thin by design; add a real directive only once something here is genuinely repeatable. Right now there's exactly one (`directives/deploy.md`), and — same as any other directive — it's backed by a real script (`execution/deploy.sh`), not a sequence of commands Claude retypes by hand each time. A directive describing a mechanical sequence with nothing in `execution/` behind it is an unfinished pair, not a sign this project doesn't need one.
+
+## Architecture
+
+FastAPI + Jinja2 + HTMX + Tailwind (via CDN, no build step, no JS framework) talking to TubeArchivist's REST API. No separate application database — TubeArchivist's API is the source of truth for everything it can hold (channels, videos, download queue, config). Deliberately minimal stack; adding anything that replicates what TubeArchivist already does (scheduling, download management, indexing) is out of scope by design. The app itself (`app/`) is hand-written, not scaffolded — there's no generated-boilerplate split to worry about here the way `youtube-withdrawal-safari` (its Xcode-based sibling) has.
+
+## Canonical Data
+
+TubeArchivist's own API/database is canonical for all channel, video, and download-queue state — never duplicated locally. The `data/` directory holds six small JSON files that store *only* what TA's API cannot, each canonical for its own narrow scope (corrected 2026-09-02 — this table previously said "five" and omitted `deleted.json`, caught by directly reading `app/deleted.py` and its callers rather than trusting the prior count):
+
+| File | Canonical for |
+|---|---|
+| `favorites.json` | Which channel IDs are pinned to the home feed |
+| `requested.json` | Locally-tracked "you requested this" state — see "Why a local requested tracker" below, this is optimistic state, not a cache |
+| `deleted.json` | Locally-tracked "you deleted this" video IDs, so a video you deleted doesn't ghost back into the pending view before TA's own index catches up (see `app/deleted.py`; `pending.py` and `videos.py` filter on it) |
+| `auto_download.json` | Which channels have auto-download enabled (TA has no per-channel auto-start API) |
+| `stats.json` | Weekly request counts |
+| `settings.json` | App-level preferences (currently just `watch_url`) |
+
+**Why a local requested tracker, not a live TA read:** setting a video's status to `priority` in TubeArchivist writes to Elasticsearch with a short indexing delay — reading the video back immediately can still show the old status. `requested.json` is optimistic UI state, reconciled against TA's actual queue on startup and on queue page loads. Don't "simplify" this into a direct API read; it was built this way after hitting the actual staleness bug.
+
+**Why local auto-download tracking:** TubeArchivist has no per-channel auto-start API. The app tracks which channels have it locally enabled and fulfils it via TA's existing priority-download mechanism — TA still does the actual downloading.
+
+**A caveat found the hard way (2026-09-02):** these trackers only stay accurate if TA state changes *through this app*. Calling TA's own API directly (bypassing the app's request/ignore/restore/delete endpoints) can leave `requested.json`/`deleted.json`/`auto_download.json` pointing at stale reality, since the app's reconciliation only runs in specific places (`requested.json` on startup and queue-page loads) — it isn't a general-purpose sync. See `HANDOFF.md` correction #6.
+
+## Evidence Standards
+
+`Confirmed` only with direct evidence (read the actual code, an actual deployed response, explicit user confirmation) — `Unconfirmed` otherwise, stating what's missing rather than presenting a guess as fact. This project's own `HANDOFF.md` is the concrete reason this matters here specifically: its reconstruction from recovered memory fragments turned up at least one claim (the compose-stack plan) that didn't match what actually shipped. Don't repeat that by treating a memory fragment, an old doc, or your own assumption as current truth without checking it against the real code or the real deployment first.
+
+## Consistency Checks
+
+`execution/deploy.sh` is the one mechanical check that exists — hard pass/fail on whether a deploy actually left the container running and responding, not a manual glance at the output. No accumulating dataset or multi-file drift risk exists at this project's current size to warrant more than that; add a real check here if that ever changes, rather than a written reminder to "remember to verify."
+
+## Context / Domain Knowledge
+
+See `context/infra.md` for the real, current deployment details (server, ports, domain, Docker network, dependencies). Kept in this repo directly, not just cross-referenced from `home-server` (which also tracks this as a deployed service) — a session working here shouldn't have to open a different repo to know where its own code runs.
+
+## Session Start
+
+`git pull` before anything else, at the start of every session — no permission needed, every time.
+
+## Session Close
+
+Never run `git add`/`commit`/`push` before an explicit wrap-up trigger ("wrap up," "end session," or equivalent). On that trigger, automatically — no confirmation step — update whatever docs need it (including `HANDOFF.md`), commit, and push. The trigger phrase itself is the permission.
+
+**Deliberately not automatic: redeploying.** Committing and pushing on wrap-up does not itself rebuild/restart the live container — this is a real, currently-running user-facing service, and a half-tested change auto-redeploying on every wrap-up is a worse failure mode than a stale deploy for a few minutes. Redeploy (`directives/deploy.md`) only when explicitly asked to.
+
+## Permissions
+
+Git, local `uvicorn` runs, and `pip install` are pre-granted in `.claude/settings.json` (gitignored here, same as this project's existing convention — recreate it locally if it's ever missing rather than committing it).
+
+**Docker is never run by Claude, even when technically permitted.** Confirmed 2026-09-02: the code-server container this session runs in has no `docker` binary and no `docker.sock` at all — Claude physically cannot run `docker`/`docker compose` from here. Separately, and more durably: the user has said directly they always run docker commands themselves. Claude's role is to edit compose/config files (it does have normal file access to `/docker/*` — same host, just not the docker CLI) and hand over exact commands for the user to paste. See `directives/deploy.md` and `context/infra.md` for the full story.
+
+## Rules Live Here, Not in Memory
+
+Whatever's learned that's worth keeping goes into a checked-in file (a directive, this file, `context/infra.md`, or `HANDOFF.md`) in the same turn — memory reinforces, it doesn't replace the repo. This file itself exists because the opposite happened once: this project's original chat history and Claude Code memory were lost, and everything about *why* this app is shaped the way it is had to be reconstructed from a handful of recovered memory fragments plus reading the actual code cold. See `HANDOFF.md` for that reconstruction and what's still genuinely unconfirmed as a result.
