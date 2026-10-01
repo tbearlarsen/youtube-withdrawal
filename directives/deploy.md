@@ -28,7 +28,7 @@ It does, with a hard pass/fail exit code:
 3. Restores the live data over whatever the pull left — also on failure, via a trap.
 4. Over SSH: `docker compose up -d --build`, then checks the container is running and `http://10.0.0.101:8008/` responds.
 
-Override the SSH target with `DEPLOY_SSH=user@host` if it ever changes.
+Override the SSH target with `DEPLOY_SSH=user@host` and the key with `DEPLOY_SSH_KEY=/path` (default `/docker/.claude-secrets/vm101_ssh_key`, the VM101 key the home-server session uses — not in a default ssh location, so it must be passed explicitly). The script checks the key is readable before touching anything, so a missing key can't leave the checkout pulled with the old container still running.
 
 ## Edge Cases
 - **Live data and git.** `data/*.json` is runtime state written by the running app in the deploy checkout. `favorites.json` and `requested.json` were tracked in git until 2026-10-01 despite `.gitignore` (added before the ignore rule), so the app's in-place edits made `git pull` either fail or risk overwriting them. The commit that untracked them *deletes* them from the deploy checkout's working tree when pulled — step 3's restore is what saves them. Never pull the deploy checkout by hand without the same backup/restore.

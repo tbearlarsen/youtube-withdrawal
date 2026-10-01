@@ -10,7 +10,13 @@ set -euo pipefail
 
 DEPLOY_DIR="${DEPLOY_DIR:-/docker/youtube-withdrawal}"
 SSH_TARGET="${DEPLOY_SSH:-claude@10.0.0.101}"
+SSH_KEY="${DEPLOY_SSH_KEY:-/docker/.claude-secrets/vm101_ssh_key}"
 BACKUP_DIR="${DEPLOY_DIR}-data-backup"
+
+if [ ! -r "$SSH_KEY" ]; then
+    echo "FAILED: SSH key $SSH_KEY not readable (set DEPLOY_SSH_KEY). Nothing was changed."
+    exit 1
+fi
 
 cd "$DEPLOY_DIR"
 
@@ -37,13 +43,13 @@ trap - EXIT
 echo "Restored live data"
 
 # 2. Rebuild and restart on VM101.
-ssh -o BatchMode=yes "$SSH_TARGET" "cd $DEPLOY_DIR && docker compose up -d --build"
+ssh -i "$SSH_KEY" -o BatchMode=yes "$SSH_TARGET" "cd $DEPLOY_DIR && docker compose up -d --build"
 
 echo "Waiting for the container to settle..."
 sleep 3
 
 # 3. Verify.
-if ! ssh -o BatchMode=yes "$SSH_TARGET" "docker ps --filter name=youtube-withdrawal --filter status=running" | grep -q youtube-withdrawal; then
+if ! ssh -i "$SSH_KEY" -o BatchMode=yes "$SSH_TARGET" "docker ps --filter name=youtube-withdrawal --filter status=running" | grep -q youtube-withdrawal; then
     echo "FAILED: container is not running. Check: docker compose logs youtube-withdrawal (on VM101)"
     exit 1
 fi
