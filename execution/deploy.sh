@@ -26,8 +26,24 @@ cd "$DEPLOY_DIR"
 rm -rf "$BACKUP_DIR"
 cp -a data "$BACKUP_DIR"
 echo "Backed up live data to $BACKUP_DIR"
+
+# Put back only files the pull removed or changed. Files the pull didn't touch
+# are left alone: the container runs as root, so most data files are root-owned
+# 0644 and this shell can't overwrite them even with identical content. Files
+# git did touch were recreated by this shell's user, so they're writable.
+restore_data() {
+    local f name
+    for f in "$BACKUP_DIR"/*.json; do
+        [ -e "$f" ] || continue
+        name=$(basename "$f")
+        if ! cmp -s "$f" "$DEPLOY_DIR/data/$name"; then
+            cp -p "$f" "$DEPLOY_DIR/data/$name"
+            echo "  restored data/$name"
+        fi
+    done
+}
 # Restore even if the pull fails part-way (set -e would otherwise exit with data reset)
-trap 'cp -a "$BACKUP_DIR"/. "$DEPLOY_DIR/data/"' EXIT
+trap restore_data EXIT
 
 tracked=$(git ls-files 'data/*.json')
 if [ -n "$tracked" ]; then
@@ -38,7 +54,7 @@ fi
 
 git pull --ff-only
 
-cp -a "$BACKUP_DIR"/. data/
+restore_data
 trap - EXIT
 echo "Restored live data"
 

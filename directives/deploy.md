@@ -25,7 +25,7 @@ bash /projects/youtube-withdrawal/execution/deploy.sh
 It does, with a hard pass/fail exit code:
 1. Backs up `/docker/youtube-withdrawal/data/` to `/docker/youtube-withdrawal-data-backup/` (overwritten each deploy).
 2. `git pull --ff-only` **locally** — not over SSH: as VM101's `claude` user, git refuses the checkout with "dubious ownership" (it's owned by a different user).
-3. Restores the live data over whatever the pull left — also on failure, via a trap.
+3. Restores live data files the pull removed or changed (`cmp -s` per file) — also on failure, via a trap. It deliberately doesn't blanket-copy: the container runs as root, so untouched data files are `root:root 0644` and unwritable by the deploying shell.
 4. Over SSH: `docker compose up -d --build`, then checks the container is running and `http://10.0.0.101:8008/` responds.
 
 Override the SSH target with `DEPLOY_SSH=user@host` and the key with `DEPLOY_SSH_KEY=/path` (default `/docker/.claude-secrets/vm101_ssh_key`, the VM101 key the home-server session uses — not in a default ssh location, so it must be passed explicitly). The script checks the key is readable before touching anything, so a missing key can't leave the checkout pulled with the old container still running.
