@@ -6,24 +6,34 @@ Rebuild and restart the live container after a code change. This is the one genu
 ## When to run
 Only when explicitly asked to deploy/redeploy — never automatically as part of Session Close, even after a commit+push. See `CLAUDE.md`'s Session Close section for why.
 
-## Tool — Claude does not run this. The user does.
+## Who runs it — Claude, not the user
 
-**Corrected 2026-09-02** (see `HANDOFF.md` correction #4): the code-server container Claude Code runs in has no `docker` binary and no `docker.sock` — confirmed absent, not a PATH issue. Claude cannot execute `execution/deploy.sh` (or any `docker`/`docker compose` command) itself, and per the user's standing instruction, wouldn't even if it technically could — docker commands are always run by the user, from wherever they actually have docker access.
+**Corrected 2026-10-01** (see `HANDOFF.md` correction #10): the user does not run deploys by hand and doesn't want to — *"No you deploy it, I dont want to have to do anything."* Deploys are done by a Claude session with the access below. The earlier rule (2026-09-02: "the user always runs docker commands themselves, Claude hands over commands") is superseded.
 
-Claude's job in a deploy:
-1. Confirm the change is actually committed (`git status` clean, or explicitly told to deploy uncommitted work).
-2. Hand the user this exact command in a copy-pasteable block:
-   ```bash
-   bash execution/deploy.sh
-   ```
-   (run from `/docker/youtube-withdrawal` — the actual compose/build directory, not necessarily wherever Claude's own checkout lives; see `context/infra.md`.)
-3. Wait for the user to report back the result. If it exited non-zero, read its own printed diagnosis together — it already distinguishes "container didn't start" from "container's up but not responding" (most often a TubeArchivist connectivity problem, not this app's own code).
+A deploy needs:
+1. File access to `/docker/youtube-withdrawal` on VM101 (any code-server session on VM101 has this), for the `git pull`.
+2. SSH to VM101 as a docker-group user — `claude@10.0.0.101` — for `docker compose`.
 
-The script itself is still useful and still does the full pull/rebuild/restart/verify sequence with a hard pass/fail exit code — that part hasn't changed. What changed is who invokes it.
+**This project's own session has (1) but not (2)** — confirmed 2026-10-01: `ssh claude@10.0.0.101` is refused (`Permission denied (publickey,password)`), and the code-server container has no `docker` binary or socket. The **home-server session does have both** (confirmed by it deploying `c11165b` 2026-10-01). So from here: commit and push, then ask the home-server session to deploy (`ListAgents` → `SendMessage` to it), including the commit hash and anything the deploy needs to know. If no session with that access is running, say so to the user rather than handing them commands.
+
+## Tool
+```bash
+bash /projects/youtube-withdrawal/execution/deploy.sh
+```
+(or the copy in `/docker/youtube-withdrawal/execution/` — the script uses an absolute `DEPLOY_DIR`, so which copy runs doesn't matter; the dev checkout's is newer until the pull.)
+
+It does, with a hard pass/fail exit code:
+1. Backs up `/docker/youtube-withdrawal/data/` to `/docker/youtube-withdrawal-data-backup/` (overwritten each deploy).
+2. `git pull --ff-only` **locally** — not over SSH: as VM101's `claude` user, git refuses the checkout with "dubious ownership" (it's owned by a different user).
+3. Restores the live data over whatever the pull left — also on failure, via a trap.
+4. Over SSH: `docker compose up -d --build`, then checks the container is running and `http://10.0.0.101:8008/` responds.
+
+Override the SSH target with `DEPLOY_SSH=user@host` if it ever changes.
 
 ## Edge Cases
+- **Live data and git.** `data/*.json` is runtime state written by the running app in the deploy checkout. `favorites.json` and `requested.json` were tracked in git until 2026-10-01 despite `.gitignore` (added before the ignore rule), so the app's in-place edits made `git pull` either fail or risk overwriting them. The commit that untracked them *deletes* them from the deploy checkout's working tree when pulled — step 3's restore is what saves them. Never pull the deploy checkout by hand without the same backup/restore.
 - If the script reports success but the deployed behavior still looks wrong, confirm the Docker build actually picked up the new code (check the image build timestamp) rather than assuming a passing health check means the right code shipped.
 - This app has no separate staging environment — a deploy goes straight to the live, user-facing instance at `withdrawal.sudheim.eu`. There's no rollback mechanism beyond `git revert` + redeploy.
 
 ## Notes
-Claude Code's own checkout (`/projects/youtube-withdrawal`, moved from `/data/projects/youtube-withdrawal` 2026-09-14) and the compose/deploy directory (`/docker/youtube-withdrawal`) are on the same VM101 host but are **separate git checkouts** — confirmed 2026-09-02, correcting the 2026-09-01 assumption that they were the same directory. `execution/deploy.sh` `cd`s to its own parent directory, so it must be run from a copy of the script that actually lives in `/docker/youtube-withdrawal` (the one `docker compose` builds from) — running a copy from Claude's own checkout would `cd` to the wrong place. Since the user is the one running the command anyway (see above), this mostly self-resolves: tell them to run it from `/docker/youtube-withdrawal`.
+Claude Code's own checkout (`/projects/youtube-withdrawal`) and the deploy directory (`/docker/youtube-withdrawal`) are on the same VM101 host but are **separate git checkouts**. Only the deploy checkout's `data/` is live state.

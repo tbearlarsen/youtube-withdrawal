@@ -19,7 +19,9 @@ Real, current state of where and how this app runs — confirmed 2026-09-01. Upd
 
 Claude Code runs on VM101 via code-server, but in `/projects/youtube-withdrawal` (moved from `/data/projects/youtube-withdrawal` 2026-09-14, part of a homelab-wide move of all project checkouts off the CIFS share onto VM101's local disk) — a **separate git checkout** from `/docker/youtube-withdrawal`, the one `docker compose` actually builds from. Confirmed by diffing the two directories: different `.git`, and `data/*.json` had already diverged (this checkout's copy is a stale snapshot from whenever it was cloned; `/docker/youtube-withdrawal/data/` is the live state). Same host, same filesystem (`/docker` is a locally-mounted disk, readable/writable directly from this checkout's shell), but not the same working directory.
 
-More importantly: **this code-server container has no `docker` binary and no `docker.sock`** — confirmed via `which docker` (not found) and `ls /var/run/docker.sock` (does not exist), searched common paths, none found. Claude Code cannot run `docker`/`docker compose` from this environment at all, regardless of which checkout it's invoked from. The user runs all docker commands themselves, from wherever they actually have docker access; Claude's role is to edit compose/config files directly (it does have file write access to `/docker/*`) and hand over the exact commands to run, not to execute them.
+This code-server container has **no `docker` binary and no `docker.sock`** (confirmed via `which docker` and `ls /var/run/docker.sock`), and its SSH key is **refused by `claude@10.0.0.101`** (confirmed 2026-10-01: `Permission denied (publickey,password)`). So this project's session cannot run `docker compose` at all. It does have plain file read/write on `/docker/*`.
+
+**Who deploys (corrected 2026-10-01):** Claude, not the user — the user said directly they don't want to do anything by hand. The home-server session has SSH to VM101 as `claude` (docker group) and deploys via `execution/deploy.sh`; this session commits, pushes, and asks it via `SendMessage`. The earlier 2026-09-02 rule ("the user runs all docker commands; Claude hands over commands to paste") is superseded — see `directives/deploy.md`.
 
 ~~As of 2026-09-01, going forward: directly on VM101 via code-server... Deploying is not a separate machine-to-machine step; it happens in place.~~ — superseded, see above.
 
@@ -40,14 +42,16 @@ If the TubeArchivist Metadata plugin is installed in Jellyfin, watch progress sy
 ## Health checks
 
 ```bash
-docker ps --filter name=youtube-withdrawal
-curl -s http://10.0.0.101:8008/
+ssh claude@10.0.0.101 'docker ps --filter name=youtube-withdrawal'   # needs a session with VM101 SSH
+curl -s http://10.0.0.101:8008/                                      # works from any VM101 code-server session
 ```
 
 ## Update procedure
 
+Run by a session with `/docker` file access + SSH to VM101 (see `directives/deploy.md`):
+
 ```bash
-cd /docker/youtube-withdrawal
-git pull
-docker compose up -d --build
+bash /projects/youtube-withdrawal/execution/deploy.sh
 ```
+
+Never a bare `git pull` in `/docker/youtube-withdrawal`: the live app writes `data/*.json` in that checkout, and the script's backup/restore around the pull is what keeps that state safe. The pull runs locally, not over SSH — as VM101's `claude` user git refuses the checkout ("dubious ownership").

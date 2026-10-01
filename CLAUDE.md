@@ -137,7 +137,7 @@ Never run `git add`/`commit`/`push` before an explicit wrap-up trigger ("wrap up
 
 Git, local `uvicorn` runs, and `pip install` are pre-granted in `.claude/settings.json` (gitignored here, same as this project's existing convention — recreate it locally if it's ever missing rather than committing it).
 
-**Docker is never run by Claude, even when technically permitted.** Confirmed 2026-09-02: the code-server container this session runs in has no `docker` binary and no `docker.sock` at all — Claude physically cannot run `docker`/`docker compose` from here. Separately, and more durably: the user has said directly they always run docker commands themselves. Claude's role is to edit compose/config files (it does have normal file access to `/docker/*` — same host, just not the docker CLI) and hand over exact commands for the user to paste. See `directives/deploy.md` and `context/infra.md` for the full story.
+**Deploys are Claude's job, not the user's** (corrected 2026-10-01 — the user said directly: *"No you deploy it, I dont want to have to do anything."* This replaces the 2026-09-02 rule that the user always runs docker commands themselves). This project's own session can't do the docker half: the code-server container has no `docker` binary or socket, and its SSH key is refused by `claude@10.0.0.101`. The home-server session has SSH to VM101 (docker group) and can deploy — route deploys through it (or any session with that access) via `SendMessage`, never back to the user as commands to paste. Deploying still only happens when asked (see Session Close). See `directives/deploy.md` and `context/infra.md`.
 
 ## Rules Live Here, Not in Memory
 
