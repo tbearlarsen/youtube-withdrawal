@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Categories — YouTube Withdrawal{% endblock %}
+
+{% block content %}
+<div class="p-8" style="max-width:56rem">
+
+    <!-- Header -->
+    <div class="mb-8" style="border-bottom:1px solid var(--c-border);padding-bottom:1.5rem">
+        <a href="/channels" style="font-size:0.62rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--c-text4);text-decoration:none">← Channels</a>
+        <h1 class="text-2xl text-white mt-2" style="letter-spacing:-0.01em">Categories</h1>
+        <p class="text-gray-500 mt-1" style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase">
+            Group channels to organise Home and All Videos
+        </p>
+    </div>
+
+    {% set label = "font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--c-text4);margin-bottom:0.75rem" %}
+    {% set icon_btn = "background:none;border:none;cursor:pointer;color:var(--c-text4);font-size:0.75rem;padding:0.2rem 0.4rem;border-radius:0.25rem" %}
+    {% set input_style = "background-color:var(--c-surface2);color:var(--c-text);font-size:0.78rem;border-radius:0.25rem;padding:0.4rem 0.7rem;border:1px solid var(--c-border);outline:none;font-family:system-ui,sans-serif" %}
+
+    <!-- Manage categories -->
+    <section class="mb-12">
+        <p style="{{ label }}">Your categories</p>
+
+        {% if categories %}
+        <div class="mb-4" style="border:1px solid var(--c-border);border-radius:0.5rem;overflow:hidden">
+            {% for name in categories %}
+            {% set n_channels = assignments.values() | select("equalto", name) | list | length %}
+            <div class="flex items-center gap-3" style="padding:0.5rem 0.75rem;{% if not loop.last %}border-bottom:1px solid var(--c-border){% endif %}">
+                <form hx-post="/categories/rename" hx-trigger="change, submit" class="flex-1" style="min-width:0">
+                    <input type="hidden" name="old" value="{{ name }}">
+                    <input type="text" name="new" value="{{ name }}" required
+                           style="{{ input_style }};width:100%;background:transparent;border-color:transparent"
+                           onfocus="this.style.borderColor='var(--c-accent)'"
+                           onblur="this.style.borderColor='transparent'">
+                </form>
+                <span style="font-size:0.62rem;color:var(--c-text4);white-space:nowrap">{{ n_channels }} channel{{ 's' if n_channels != 1 }}</span>
+                <button hx-post="/categories/move" hx-vals='{"name": {{ name | tojson }}, "offset": -1}'
+                        title="Move up" style="{{ icon_btn }}{% if loop.first %};opacity:0.3{% endif %}" {% if loop.first %}disabled{% endif %}>↑</button>
+                <button hx-post="/categories/move" hx-vals='{"name": {{ name | tojson }}, "offset": 1}'
+                        title="Move down" style="{{ icon_btn }}{% if loop.last %};opacity:0.3{% endif %}" {% if loop.last %}disabled{% endif %}>↓</button>
+                <button hx-post="/categories/delete" hx-vals='{"name": {{ name | tojson }}}'
+                        hx-confirm="Delete the category {{ name }}? Its channels become uncategorized."
+                        title="Delete" style="{{ icon_btn }}"
+                        onmouseover="this.style.color='var(--c-accent)'" onmouseout="this.style.color='var(--c-text4)'">✕</button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form hx-post="/categories" class="flex gap-3" style="max-width:28rem">
+            <input type="text" name="name" placeholder="New category name" required autocomplete="off"
+                   style="{{ input_style }};flex:1;min-width:0"
+                   onfocus="this.style.borderColor='var(--c-accent)'"
+                   onblur="this.style.borderColor='var(--c-border)'">
+            <button type="submit" class="btn-outline shrink-0">Add</button>
+        </form>
+    </section>
+
+    <!-- Assign channels -->
+    {% if categories %}
+    <section>
+        <div class="flex items-center justify-between" style="margin-bottom:0.75rem">
+            <p style="{{ label }};margin-bottom:0">Assign channels</p>
+            <div class="flex items-center gap-1">
+                {% for key, text in [('all', 'All'), ('uncategorized', 'Uncategorized only')] %}
+                <a href="/categories?show={{ key }}"
+                   style="font-size:0.62rem;letter-spacing:0.06em;text-transform:uppercase;padding:0.25rem 0.6rem;border-radius:999px;text-decoration:none;
+                          {% if show == key %}background-color:var(--c-hover);color:var(--c-text);font-weight:500{% else %}color:var(--c-text4){% endif %}">{{ text }}</a>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if channels %}
+        <div style="border:1px solid var(--c-border);border-radius:0.5rem;overflow:hidden">
+            {% for channel in channels %}
+            <div class="flex items-center gap-3" style="padding:0.45rem 0.75rem;{% if not loop.last %}border-bottom:1px solid var(--c-border){% endif %}">
+                <div class="shrink-0 rounded-full overflow-hidden" style="width:1.6rem;height:1.6rem;background-color:var(--c-surface2)">
+                    {% if channel.channel_thumb_url %}
+                    <img src="{{ channel.channel_thumb_url | ta_thumb }}" class="w-full h-full object-cover" loading="lazy" alt="">
+                    {% endif %}
+                </div>
+                <a href="/channels/{{ channel.channel_id }}" class="flex-1 truncate"
+                   style="font-size:0.78rem;color:var(--c-text);text-decoration:none;min-width:0">
+                    {{ channel.channel_name }}
+                    {% if channel.channel_id in favorites %}<span title="Favorite" style="color:var(--c-pending);margin-left:0.25rem">★</span>{% endif %}
+                </a>
+                {% set sel_channel_id = channel.channel_id %}{% set sel_current = assignments.get(channel.channel_id) %}
+                {% include "partials/category_select.html" %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="font-size:0.75rem;color:var(--c-text4)">Every channel has a category.</p>
+        {% endif %}
+    </section>
+    {% endif %}
+
+</div>
+{% endblock %}

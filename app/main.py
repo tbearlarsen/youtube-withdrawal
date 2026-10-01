@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app import auto_download as auto_dl, requested as req_tracker, deleted as del_tracker
 from app.ta_client import TAClient
-from app.routers import channels, videos, queue, home, settings, downloads, pending
+from app.routers import categories, channels, videos, queue, home, settings, downloads, pending
 
 
 async def _reconcile_requested(ta: TAClient) -> None:
@@ -19,10 +19,7 @@ async def _reconcile_requested(ta: TAClient) -> None:
 
     pending_ids = {v["youtube_id"] for v in pending_items}
 
-    # Clean up req_tracker
-    for vid_id in list(req_tracker.get_all()):
-        if vid_id not in pending_ids:
-            req_tracker.remove(vid_id)
+    req_tracker.prune(pending_ids)
 
     # If a deleted video reappeared in TA's pending queue (ES lag / scan race),
     # push the ignore again now that the queue entry exists
@@ -81,6 +78,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.include_router(home.router)
 app.include_router(channels.router)
+app.include_router(categories.router)
 app.include_router(videos.router)
 app.include_router(queue.router)
 app.include_router(downloads.router)

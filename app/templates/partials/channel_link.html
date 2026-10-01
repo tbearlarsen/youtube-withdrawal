@@ -1,0 +1,9 @@
+{# Channel name under a video, linking to its channel page. Expects ch_id, ch_name. #}
+{% if ch_id %}
+<a href="/channels/{{ ch_id }}" class="truncate"
+   style="display:block;font-size:0.6rem;color:var(--c-text4);margin-top:0.3rem;text-decoration:none;transition:color 150ms"
+   onmouseover="this.style.color='var(--c-accent)'"
+   onmouseout="this.style.color='var(--c-text4)'">{{ ch_name }}</a>
+{% else %}
+<p class="truncate" style="font-size:0.6rem;color:var(--c-text4);margin-top:0.3rem">{{ ch_name }}</p>
+{% endif %}

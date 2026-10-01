@@ -1,0 +1,13 @@
+{# Category dropdown for one channel; saves on change. Expects sel_channel_id, sel_current, categories. #}
+<select name="category"
+        hx-post="/channels/{{ sel_channel_id }}/category"
+        hx-trigger="change"
+        hx-swap="none"
+        class="rounded px-2 py-1 border cursor-pointer"
+        style="background-color:var(--c-surface2);color:{{ 'var(--c-text)' if sel_current else 'var(--c-text4)' }};border-color:var(--c-border);font-size:0.65rem;letter-spacing:0.04em;font-family:system-ui,sans-serif;max-width:12rem"
+        onchange="this.style.color = this.value ? 'var(--c-text)' : 'var(--c-text4)'">
+    <option value="" {% if not sel_current %}selected{% endif %}>No category</option>
+    {% for name in categories %}
+    <option value="{{ name }}" {% if sel_current == name %}selected{% endif %}>{{ name }}</option>
+    {% endfor %}
+</select>

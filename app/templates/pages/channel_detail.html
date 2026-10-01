@@ -28,6 +28,11 @@
                     Last scanned {{ channel.channel_last_refresh | time_ago }}
                     {% if channel.channel_subs %} · {{ "{:,}".format(channel.channel_subs) }} subscribers{% endif %}
                 </p>
+                {% if categories %}
+                <div class="mt-2">{% include "partials/category_select.html" %}</div>
+                {% else %}
+                <a href="/categories" class="mt-2 inline-block" style="font-size:0.62rem;color:var(--c-text4);text-decoration:none">+ Set up categories</a>
+                {% endif %}
             </div>
         </div>
     </div>

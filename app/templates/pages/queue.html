@@ -12,6 +12,26 @@
         </p>
     </div>
 
+    <!-- Request a single video by link -->
+    <div class="mb-8">
+        <form hx-post="/queue/add"
+              hx-target="#queue-add-result"
+              hx-swap="innerHTML"
+              hx-on::after-request="if (event.detail.successful) this.reset()"
+              class="flex gap-3" style="max-width:36rem">
+            <input type="text"
+                   name="url"
+                   placeholder="Paste a YouTube video link"
+                   autocomplete="off"
+                   required
+                   style="flex:1;min-width:0;background-color:var(--c-surface2);color:var(--c-text);font-size:0.8rem;border-radius:0.25rem;padding:0.5rem 0.875rem;border:1px solid var(--c-border);outline:none;font-family:system-ui,sans-serif"
+                   onfocus="this.style.borderColor='var(--c-accent)'"
+                   onblur="this.style.borderColor='var(--c-border)'">
+            <button type="submit" class="btn-outline shrink-0">Request</button>
+        </form>
+        <div id="queue-add-result"></div>
+    </div>
+
     <!-- Queue list — polled every 10s by HTMX -->
     <div id="queue-list"
          hx-get="/queue/items"

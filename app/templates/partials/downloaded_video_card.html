@@ -62,9 +62,8 @@
         </a>
 
         {% if show_channel and video.channel %}
-        <p class="truncate" style="font-size:0.6rem;color:var(--c-text4);margin-top:0.3rem">
-            {{ video.channel.channel_name | default('') }}
-        </p>
+        {% set ch_id = video.channel.channel_id %}{% set ch_name = video.channel.channel_name | default('') %}
+        {% include "partials/channel_link.html" %}
         {% endif %}
 
         {% if video.published %}

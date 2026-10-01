@@ -93,11 +93,12 @@ Full citations, confidence levels per claim, and the reasoning behind each secti
 
 ## Canonical Data
 
-TubeArchivist's own API/database is canonical for all channel, video, and download-queue state — never duplicated locally. The `data/` directory holds six small JSON files that store *only* what TA's API cannot, each canonical for its own narrow scope (corrected 2026-09-02 — this table previously said "five" and omitted `deleted.json`, caught by directly reading `app/deleted.py` and its callers rather than trusting the prior count):
+TubeArchivist's own API/database is canonical for all channel, video, and download-queue state — never duplicated locally. The `data/` directory holds seven small JSON files that store *only* what TA's API cannot, each canonical for its own narrow scope (corrected 2026-09-02 — this table previously said "five" and omitted `deleted.json`, caught by directly reading `app/deleted.py` and its callers rather than trusting the prior count; `categories.json` added 2026-10-01):
 
 | File | Canonical for |
 |---|---|
 | `favorites.json` | Which channel IDs are pinned to the home feed |
+| `categories.json` | User-defined channel categories: ordered names plus channel → category (one per channel). TA has no channel grouping — see `app/categories.py` |
 | `requested.json` | Locally-tracked "you requested this" state — see "Why a local requested tracker" below, this is optimistic state, not a cache |
 | `deleted.json` | Locally-tracked "you deleted this" video IDs, so a video you deleted doesn't ghost back into the pending view before TA's own index catches up (see `app/deleted.py`; `pending.py` and `videos.py` filter on it) |
 | `auto_download.json` | Which channels have auto-download enabled (TA has no per-channel auto-start API) |

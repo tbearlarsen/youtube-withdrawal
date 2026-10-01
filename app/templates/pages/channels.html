@@ -18,6 +18,7 @@
                 <option value="{{ value }}" {% if value == current_sort %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
+            <a href="/categories" class="btn-secondary">Categories</a>
             <button onclick="document.getElementById('add-channel-panel').classList.toggle('hidden')"
                     class="btn-outline flex items-center gap-2">
                 <svg style="width:11px;height:11px" fill="none" stroke="currentColor" viewBox="0 0 24 24">

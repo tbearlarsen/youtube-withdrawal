@@ -7,16 +7,16 @@
     <div class="flex items-end justify-between mb-8" style="border-bottom:1px solid var(--c-border);padding-bottom:1.5rem">
         <div>
             <h1 class="text-2xl text-white" style="letter-spacing:-0.01em">All Videos</h1>
-            {% if videos %}
+            {% if total %}
             <p class="text-gray-500 mt-1" style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase">
-                {{ videos | length }} video{{ 's' if videos | length != 1 }}
+                {{ total }} video{{ 's' if total != 1 }}
             </p>
             {% endif %}
         </div>
         {% if sort_options is defined %}
         <div class="flex items-center gap-2 shrink-0 pb-0.5">
             {% for key, label in sort_options.items() %}
-            <a href="/pending?sort={{ key }}"
+            <a href="/pending?{{ dict(sort=key, category=current_category, view=current_view) | urlencode }}"
                style="font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;padding:0.3rem 0.7rem;
                       border-radius:999px;text-decoration:none;transition:background-color 120ms,color 120ms;
                       {% if current_sort == key %}
@@ -31,12 +31,17 @@
         {% endif %}
     </div>
 
-    {% if videos %}
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4">
-        {% for video in videos %}
-            {% include "partials/video_card.html" %}
-        {% endfor %}
-    </div>
+    {% if total %}
+    {% include "partials/category_bar.html" %}
+
+    {% if view_mode == "grouped" %}
+        {% include "partials/video_sections.html" %}
+    {% elif videos %}
+        {% set grid_videos = videos %}
+        {% include "partials/video_grid.html" %}
+    {% else %}
+    <p class="mt-16 text-center" style="font-size:0.75rem;color:var(--c-text4)">Nothing in this category.</p>
+    {% endif %}
 
     {% else %}
     <div class="flex flex-col items-center justify-center mt-24 text-center">

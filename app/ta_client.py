@@ -34,6 +34,25 @@ class TAClient:
         r.raise_for_status()
         return r.json()
 
+    async def get_all_subscribed_channels(self) -> list[dict]:
+        """Every subscribed channel across all pages, deduplicated by channel_id."""
+        first = await self.get_subscribed_channels(page=0)
+        last_page = first.get("paginate", {}).get("last_page", 0)
+        raw = list(first.get("data", []))
+        if last_page > 0:
+            rest = await asyncio.gather(*[self.get_subscribed_channels(page=p) for p in range(1, last_page + 1)])
+            for r in rest:
+                raw.extend(r.get("data", []))
+        # TA's pagination metadata can be inconsistent
+        seen: set[str] = set()
+        channels: list[dict] = []
+        for c in raw:
+            cid = c.get("channel_id")
+            if cid and cid not in seen:
+                seen.add(cid)
+                channels.append(c)
+        return channels
+
     async def get_channel(self, channel_id: str) -> dict | None:
         r = await self._client.get(f"/api/channel/{channel_id}/")
         if r.status_code == 404:
@@ -92,25 +111,52 @@ class TAClient:
         """Ensure a video is ignored in TA's download queue.
 
         Downloaded videos are removed from the queue after download, so a plain
-        ignore call returns 404. In that case we add the video back via URL and
-        immediately ignore it.
+        ignore call returns 404. TA's "ignore-force" status covers that case: it
+        (re-)adds the video to the queue as ignored, as a background task.
         """
-        r = await self._client.post(
-            f"/api/download/{video_id}/", json={"status": "ignore"}
-        )
-        if r.status_code < 400:
-            return
-        # No queue entry exists — add via URL then ignore
         try:
-            url = f"https://www.youtube.com/watch?v={video_id}"
-            await self._client.post("/api/download/", json={"data": url})
             await self._client.post(
-                f"/api/download/{video_id}/", json={"status": "ignore"}
+                f"/api/download/{video_id}/", json={"status": "ignore-force"}
             )
         except Exception:
             pass
 
-    async def restore_video(self, video_id: str) -> None:
+    async def add_videos(self, ids_or_urls: list[str], auto_start: bool = False) -> None:
+        """Add videos to TA's download queue by ID or URL.
+
+        Runs as a background task in TA, so the items aren't in the queue yet
+        when this returns. With auto_start they're downloaded with priority.
+        """
+        params = {"autostart": "true"} if auto_start else {}
+        payload = {"data": [{"youtube_id": v, "status": "pending"} for v in ids_or_urls]}
+        r = await self._client.post("/api/download/", params=params, json=payload)
+        r.raise_for_status()
+
+    async def requeue_video(self, video_id: str) -> None:
+        """Put a video back to plain pending, clearing any request.
+
+        TA marks a requested video as status=pending + auto_start=true, and its
+        status API can't clear auto_start — setting status back to "pending"
+        leaves it flagged, so the downloader still grabs it. Removing the queue
+        entry and re-adding it without autostart is the only way to reset it.
+        The re-add is a background task, so the video is briefly absent.
+        """
+        r = await self._client.delete(f"/api/download/{video_id}/")
+        r.raise_for_status()
+        await self.add_videos([video_id])
+
+    async def restore_video(self, video_id: str, auto_start: bool | None = None) -> None:
+        """Set a queue item back to plain pending (un-ignore, or cancel a request).
+
+        Only items flagged auto_start need the slower requeue; pass the item's
+        auto_start if already known to skip the lookup.
+        """
+        if auto_start is None:
+            item = await self.get_download_item(video_id)
+            auto_start = bool(item and item.get("auto_start"))
+        if auto_start:
+            await self.requeue_video(video_id)
+            return
         r = await self._client.post(
             f"/api/download/{video_id}/", json={"status": "pending"}
         )
@@ -132,11 +178,6 @@ class TAClient:
         payload = {"data": [{"channel_id": channel_id, "channel_subscribed": False}]}
         r = await self._client.post("/api/channel/", json=payload)
         r.raise_for_status()
-
-    async def search(self, query: str) -> dict:
-        r = await self._client.get("/api/search/", params={"query": query})
-        r.raise_for_status()
-        return r.json()
 
     async def get_priority_downloads(self) -> list[dict]:
         """Fetch all user-requested (priority) downloads across all pending pages."""

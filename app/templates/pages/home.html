@@ -13,7 +13,7 @@
         <a href="/channels" class="btn-outline mt-6">Browse Channels</a>
     </div>
 
-    {% elif not videos %}
+    {% elif not videos and not current_category %}
     <div class="flex flex-col items-center justify-center mt-24 text-center">
         <p class="text-gray-300" style="font-family:Georgia,'Times New Roman',serif;font-size:1.1rem">All caught up</p>
         <p class="text-gray-500 mt-2" style="font-size:0.75rem">No pending or downloaded videos from your favorite channels.</p>
@@ -33,16 +33,16 @@
         {% endif %}
     </div>
 
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4">
-        {% for video in videos %}
-            {% set show_channel = true %}
-            {% if video._type == "downloaded" %}
-                {% include "partials/downloaded_video_card.html" %}
-            {% else %}
-                {% include "partials/video_card.html" %}
-            {% endif %}
-        {% endfor %}
-    </div>
+    {% include "partials/category_bar.html" %}
+
+    {% if view_mode == "grouped" %}
+        {% include "partials/video_sections.html" %}
+    {% elif videos %}
+        {% set grid_videos = videos %}
+        {% include "partials/video_grid.html" %}
+    {% else %}
+    <p class="mt-16 text-center" style="font-size:0.75rem;color:var(--c-text4)">Nothing in this category.</p>
+    {% endif %}
 
     {% if capped %}
     <p class="mt-8 text-center" style="font-size:0.65rem;color:var(--c-text4)">

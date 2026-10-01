@@ -48,8 +48,13 @@
         </a>
 
         {% if show_channel and video.channel_name %}
-        <p class="truncate" style="font-size:0.6rem;color:var(--c-text4);margin-top:0.3rem">
-            {{ video.channel_name }}
+        {% set ch_id = video.channel_id %}{% set ch_name = video.channel_name %}
+        {% include "partials/channel_link.html" %}
+        {% endif %}
+
+        {% if video.published %}
+        <p style="font-size:0.58rem;color:var(--c-text4);margin-top:0.3rem;font-family:system-ui,sans-serif">
+            {{ video.published | format_published }}
         </p>
         {% endif %}
 
@@ -76,7 +81,7 @@
                 {% if video.status == 'downloading' %}Downloading{% else %}Requested{% endif %}
             </span>
             {% if video.status != 'downloading' %}
-            <button hx-post="/videos/{{ video.youtube_id }}/ignore"
+            <button hx-post="/videos/{{ video.youtube_id }}/cancel{% if show_channel %}?show_channel=1{% endif %}"
                     hx-target="closest .video-card"
                     hx-swap="outerHTML"
                     title="Cancel request"
@@ -90,13 +95,10 @@
             {% endif %}
 
             {% else %}
-            <span style="font-size:0.58rem;color:var(--c-text4);font-family:system-ui,sans-serif">
-                {{ video.published | format_published if video.published else '' }}
-            </span>
-            <button hx-post="/videos/{{ video.youtube_id }}/request"
-                    hx-target="#vid-actions-{{ video.youtube_id }}"
+            <button hx-post="/videos/{{ video.youtube_id }}/request{% if show_channel %}?show_channel=1{% endif %}"
+                    hx-target="closest .video-card"
                     hx-swap="outerHTML"
-                    style="margin-left:auto;font-size:0.55rem;letter-spacing:0.07em;text-transform:uppercase;font-weight:500;font-family:system-ui,sans-serif;cursor:pointer;padding:0.22rem 0.65rem;border-radius:999px;border:1px solid var(--c-accent);color:var(--c-accent);background:transparent;transition:background-color 150ms,color 150ms,border-color 150ms"
+                    style="flex:1;font-size:0.55rem;letter-spacing:0.07em;text-transform:uppercase;font-weight:500;font-family:system-ui,sans-serif;cursor:pointer;padding:0.3rem 0.5rem;border-radius:999px;border:1px solid var(--c-accent);color:var(--c-accent);background:transparent;transition:background-color 150ms,color 150ms,border-color 150ms"
                     onmouseover="this.style.backgroundColor='var(--c-accent)';this.style.color='#fff'"
                     onmouseout="this.style.backgroundColor='';this.style.color='var(--c-accent)'">
                 Request
@@ -104,13 +106,10 @@
             <button hx-post="/videos/{{ video.youtube_id }}/ignore"
                     hx-target="closest .video-card"
                     hx-swap="outerHTML"
-                    title="Ignore"
-                    style="cursor:pointer;padding:0.28rem;border-radius:50%;border:none;background:transparent;color:var(--c-text4);display:flex;align-items:center;flex-shrink:0;transition:color 150ms,background-color 150ms"
-                    onmouseover="this.style.color='var(--c-text)';this.style.backgroundColor='var(--c-hover)'"
-                    onmouseout="this.style.color='var(--c-text4)';this.style.backgroundColor=''">
-                <svg style="width:11px;height:11px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
+                    style="flex:1;font-size:0.55rem;letter-spacing:0.07em;text-transform:uppercase;font-weight:500;font-family:system-ui,sans-serif;cursor:pointer;padding:0.3rem 0.5rem;border-radius:999px;border:1px solid var(--c-border);color:var(--c-text3);background:transparent;transition:border-color 150ms,color 150ms"
+                    onmouseover="this.style.borderColor='var(--c-text3)';this.style.color='var(--c-text)'"
+                    onmouseout="this.style.borderColor='var(--c-border)';this.style.color='var(--c-text3)'">
+                Ignore
             </button>
             {% endif %}
 

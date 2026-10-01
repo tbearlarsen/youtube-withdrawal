@@ -23,7 +23,7 @@
         <div class="flex-1 min-w-0">
             <p class="text-white truncate" style="font-size:0.82rem;font-weight:500">{{ video.title | default('') }}</p>
             <p class="text-gray-400 mt-0.5" style="font-size:0.65rem">
-                {{ video.channel_name | default('') }}
+                {% if video.channel_id %}<a href="/channels/{{ video.channel_id }}" style="color:inherit;text-decoration:none;transition:color 150ms" onmouseover="this.style.color='var(--c-accent)'" onmouseout="this.style.color=''">{{ video.channel_name | default('') }}</a>{% else %}{{ video.channel_name | default('') }}{% endif %}
                 {% if video.published %}<span style="color:var(--c-border)"> · </span>{{ video.published | format_published }}{% endif %}
             </p>
         </div>

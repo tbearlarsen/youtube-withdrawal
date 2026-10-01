@@ -1,0 +1,10 @@
+{# A grid of video cards. Expects grid_videos; items with _type == "downloaded" use the downloaded card. #}
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4">
+    {% for video in grid_videos %}
+        {% if video._type == "downloaded" %}
+            {% include "partials/downloaded_video_card.html" %}
+        {% else %}
+            {% include "partials/video_card.html" %}
+        {% endif %}
+    {% endfor %}
+</div>

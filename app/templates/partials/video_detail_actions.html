@@ -1,0 +1,93 @@
+            <!-- Status + actions -->
+            <div id="vid-actions-{{ video.youtube_id }}"
+                 style="display:flex;align-items:center;gap:0.6rem;margin-top:1.5rem;flex-wrap:wrap">
+
+                {% if source == 'downloaded' %}
+                <span style="display:inline-flex;align-items:center;gap:0.4rem;
+                             font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;
+                             font-weight:500;font-family:system-ui,sans-serif;color:var(--c-queued)">
+                    <span style="width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0"></span>
+                    Downloaded
+                </span>
+                <button hx-delete="/videos/{{ video.youtube_id }}"
+                        hx-confirm="Delete this video from TubeArchivist?"
+                        hx-on::after-request="window.history.back()"
+                        style="margin-left:auto;font-size:0.58rem;letter-spacing:0.07em;text-transform:uppercase;
+                               font-weight:500;font-family:system-ui,sans-serif;cursor:pointer;
+                               padding:0.35rem 0.9rem;border-radius:0.5rem;
+                               border:1px solid var(--c-border);color:var(--c-text3);background:transparent;
+                               transition:border-color 150ms,color 150ms"
+                        onmouseover="this.style.borderColor='var(--c-text3)';this.style.color='var(--c-text)'"
+                        onmouseout="this.style.borderColor='var(--c-border)';this.style.color='var(--c-text3)'">
+                    Delete
+                </button>
+
+                {% elif video.status == 'ignore' %}
+                <span style="display:inline-flex;align-items:center;gap:0.4rem;
+                             font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;
+                             font-weight:500;font-family:system-ui,sans-serif;color:var(--c-text4)">
+                    <span style="width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0"></span>
+                    Ignored
+                </span>
+                <button hx-post="/videos/{{ video.youtube_id }}/restore?from=detail"
+                        hx-target="#vid-actions-{{ video.youtube_id }}"
+                        hx-swap="outerHTML"
+                        style="font-size:0.58rem;letter-spacing:0.07em;text-transform:uppercase;
+                               font-weight:500;font-family:system-ui,sans-serif;cursor:pointer;
+                               padding:0.35rem 0.9rem;border-radius:0.5rem;
+                               border:1px solid var(--c-border);color:var(--c-text3);background:transparent;
+                               transition:border-color 150ms,color 150ms"
+                        onmouseover="this.style.borderColor='var(--c-text3)';this.style.color='var(--c-text)'"
+                        onmouseout="this.style.borderColor='var(--c-border)';this.style.color='var(--c-text3)'">
+                    Restore
+                </button>
+
+                {% elif is_queued %}
+                <span style="display:inline-flex;align-items:center;gap:0.4rem;
+                             font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;
+                             font-weight:500;font-family:system-ui,sans-serif;color:var(--c-queued)">
+                    <span style="width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0"></span>
+                    Requested
+                </span>
+                <button hx-post="/videos/{{ video.youtube_id }}/cancel?from=detail"
+                        hx-target="#vid-actions-{{ video.youtube_id }}"
+                        hx-swap="outerHTML"
+                        style="font-size:0.58rem;letter-spacing:0.07em;text-transform:uppercase;
+                               font-weight:500;font-family:system-ui,sans-serif;cursor:pointer;
+                               padding:0.35rem 0.9rem;border-radius:0.5rem;
+                               border:1px solid var(--c-border);color:var(--c-text3);background:transparent;
+                               transition:border-color 150ms,color 150ms"
+                        onmouseover="this.style.borderColor='var(--c-text3)';this.style.color='var(--c-text)'"
+                        onmouseout="this.style.borderColor='var(--c-border)';this.style.color='var(--c-text3)'">
+                    Cancel request
+                </button>
+
+                {% else %}
+                <button hx-post="/videos/{{ video.youtube_id }}/request?from=detail"
+                        hx-target="#vid-actions-{{ video.youtube_id }}"
+                        hx-swap="outerHTML"
+                        style="font-size:0.58rem;letter-spacing:0.07em;text-transform:uppercase;
+                               font-weight:500;font-family:system-ui,sans-serif;cursor:pointer;
+                               padding:0.35rem 1.1rem;border-radius:0.5rem;
+                               border:1px solid var(--c-accent);color:var(--c-accent);background:transparent;
+                               transition:background-color 150ms,color 150ms"
+                        onmouseover="this.style.backgroundColor='var(--c-accent)';this.style.color='#fff'"
+                        onmouseout="this.style.backgroundColor='';this.style.color='var(--c-accent)'">
+                    Request Download
+                </button>
+                <button hx-post="/videos/{{ video.youtube_id }}/ignore?from=detail"
+                        hx-target="#vid-actions-{{ video.youtube_id }}"
+                        hx-swap="outerHTML"
+                        style="font-size:0.58rem;letter-spacing:0.07em;text-transform:uppercase;
+                               font-weight:500;font-family:system-ui,sans-serif;cursor:pointer;
+                               padding:0.35rem 0.9rem;border-radius:0.5rem;
+                               border:1px solid var(--c-border);color:var(--c-text3);background:transparent;
+                               transition:border-color 150ms,color 150ms"
+                        onmouseover="this.style.borderColor='var(--c-text3)';this.style.color='var(--c-text)'"
+                        onmouseout="this.style.borderColor='var(--c-border)';this.style.color='var(--c-text3)'">
+                    Ignore
+                </button>
+                {% endif %}
+
+            </div>
+

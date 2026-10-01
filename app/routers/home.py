@@ -2,7 +2,7 @@ import asyncio
 
 from fastapi import APIRouter, Request
 
-from app import requested as req_tracker, deleted as del_tracker
+from app import categories, requested as req_tracker, deleted as del_tracker
 from app.favorites import get_favorites
 from app.stats import get_weekly_requests
 from app.templating import templates
@@ -13,7 +13,7 @@ _HOME_LIMIT = 200
 
 
 @router.get("/")
-async def home_page(request: Request):
+async def home_page(request: Request, category: str = "", view: str = "grouped"):
     ta = request.app.state.ta
     favorite_ids = get_favorites()
 
@@ -75,20 +75,25 @@ async def home_page(request: Request):
     all_videos = pending_videos + downloaded_videos
     all_videos.sort(key=lambda v: v.get("published", "0"), reverse=True)
 
-    total = len(all_videos)
+    ctx = categories.build_view(all_videos, category, view)
+    total = len(ctx["videos"])
+    if ctx["view_mode"] != "grouped":
+        ctx["videos"] = ctx["videos"][:_HOME_LIMIT]
 
     return templates.TemplateResponse(
         request,
         "pages/home.html",
         {
-            "videos": all_videos[:_HOME_LIMIT],
+            **ctx,
             "total": total,
-            "capped": total > _HOME_LIMIT,
+            "capped": ctx["view_mode"] != "grouped" and total > _HOME_LIMIT,
             "no_favorites": False,
             "active_page": "home",
             "active_section": "home",
             "weekly_requests": get_weekly_requests(),
             "show_channel": True,
             "requested_ids": req_tracker.get_all(),
+            "base_path": "/",
+            "base_qs": {},
         },
     )

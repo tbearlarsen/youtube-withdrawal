@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request
 
-from app import requested as req_tracker, deleted as del_tracker
+from app import categories, requested as req_tracker, deleted as del_tracker
 from app.templating import templates
 
 router = APIRouter()
@@ -13,7 +13,7 @@ _SORT_OPTIONS = {
 
 
 @router.get("/pending")
-async def pending_page(request: Request, sort: str = "newest"):
+async def pending_page(request: Request, sort: str = "newest", category: str = "", view: str = "grouped"):
     if sort not in _SORT_OPTIONS:
         sort = "newest"
     deleted = del_tracker.get_all()
@@ -33,7 +33,10 @@ async def pending_page(request: Request, sort: str = "newest"):
         request,
         "pages/pending.html",
         {
-            "videos": videos,
+            **categories.build_view(videos, category, view),
+            "total": len(videos),
+            "base_path": "/pending",
+            "base_qs": {"sort": sort},
             "active_page": "pending",
             "active_section": "library",
             "show_channel": True,

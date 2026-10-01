@@ -23,19 +23,20 @@ TubeArchivist        ← downloads, stores, indexes
 Your media library   (Jellyfin, Plex, etc.)
 ```
 
-There is no separate database. No duplicate download logic. The five JSON files in `data/` store only what TA's API cannot — your favorites, requested videos, auto-download settings, stats, and one app preference.
+There is no separate database. No duplicate download logic. The seven JSON files in `data/` store only what TA's API cannot — your favorites, channel categories, requested and deleted videos, auto-download settings, stats, and one app preference.
 
 ---
 
 ## Features
 
 - **Home feed** — pending videos from favorited channels, newest first, filtered to regular videos only (no shorts or streams)
+- **Categories** — group channels into your own categories (one per channel); Home and All Videos show a section per category, with chips to filter to one
 - **Channel browser** — all TubeArchivist subscriptions with pending counts, sortable by name, pending count, or favorites-first
 - **Channel detail** — tabs for pending, downloaded, and ignored videos; per-channel controls to request all, ignore all, restore ignored, subscribe/unsubscribe, favorite, and enable auto-download
 - **Subscribe from the app** — search by channel URL, @handle, or YouTube channel ID; resolves the channel via yt-dlp without leaving the app
 - **Video request** — click Request on any pending video to queue it for immediate download in TubeArchivist
 - **Video detail** — full info page for any video, whether pending or already downloaded
-- **Queue** — what you've requested that hasn't finished downloading yet
+- **Queue** — what you've requested that hasn't finished downloading yet; paste a link to request a single video from any channel, followed or not
 - **Downloads** — your full downloaded library with Jellyfin watch-progress bars
 - **Auto-download** — per-channel toggle that automatically requests every new pending video from that channel
 - **Settings** — directly controls TubeArchivist configuration via its API: subtitles, SponsorBlock, download format, comments, speed limits, subscription scan schedule, videos indexed per scan, and more
@@ -164,7 +165,13 @@ Everything else is configured in the app's Settings page. All download and subsc
 
 Shows pending videos (not yet downloaded) from your favorited channels, sorted by publish date. Capped at 200 videos. Only regular videos are shown — shorts and streams are filtered out so they don't pollute the feed.
 
-Click **Request** on any video to queue it for download. TubeArchivist will pick it up on its next download cycle.
+Click **Request** on any video to queue it for download. TubeArchivist will pick it up on its next download cycle. **Ignore** dismisses a video immediately; the × on a requested video cancels the request and puts it back to pending (on auto-download channels it ignores it instead, since the auto-download loop would otherwise just request it again). Click a channel name under any video to open that channel.
+
+If you've set up categories, videos are grouped into a section per category (each showing its newest 12, with **View all**), with Uncategorized last. Use the chips to show one category, or **List** for a single newest-first grid. All Videos works the same way.
+
+### Categories
+
+Open **Channels → Categories** to add, rename, reorder, and delete categories, and to assign every channel from one list (filter to *Uncategorized only* to sort the rest). A channel's own page also has a category dropdown. Deleting a category leaves its channels uncategorized.
 
 ### Channel browser
 
@@ -180,7 +187,7 @@ Click any channel to see three tabs:
 - **Downloaded** — videos already in your library.
 - **Ignored** — videos you've dismissed. Restore individually or restore all at once.
 
-Per-channel actions in the header: toggle favorite (shows on home feed), toggle auto-download, ignore all pending, subscribe/unsubscribe.
+Per-channel actions in the header: set category, toggle favorite (shows on home feed), toggle auto-download, ignore all pending, subscribe/unsubscribe.
 
 ### Auto-download
 
@@ -195,6 +202,10 @@ When you enable auto-download for a channel, all currently pending videos are re
 Shows videos you've requested that are still pending or actively downloading. The queue is based on your local `requested.json`, not TubeArchivist's status, to avoid stale reads caused by Elasticsearch indexing lag after a status change.
 
 Videos are removed from the queue automatically once TubeArchivist finishes downloading them (they'll move to **Downloads** instead). You can also remove a video from the queue manually, which restores it to pending status in TubeArchivist.
+
+**Requesting a single video by link**: paste a YouTube video URL (watch, youtu.be, shorts, or live links) at the top of the Queue page. It works for channels you don't follow — TubeArchivist adds it and downloads it with priority. Channel and playlist links are rejected on purpose; this is for one deliberate video at a time. Adding is a background task in TubeArchivist, so the video appears in the queue within a minute rather than instantly.
+
+**Why cancelling a request is a remove-and-re-add:** TubeArchivist marks a requested video with a hidden `auto_start` flag that its API can't clear — setting the status back to `pending` leaves the flag set, and the downloader still picks the video up. So cancelling a request, removing a video from the queue, and restoring an ignored video that had once been requested all delete the queue entry and re-add it as plain pending.
 
 ### Downloads
 
@@ -256,12 +267,14 @@ After that, watch progress updates in Jellyfin will propagate to TubeArchivist a
 
 ## Persistent data
 
-The `data/` volume holds five small JSON files. They require no migration — missing files are created with safe defaults on first write.
+The `data/` volume holds seven small JSON files. They require no migration — missing files are created with safe defaults on first write.
 
 | File | Contents |
 |---|---|
 | `favorites.json` | Ordered list of channel IDs pinned to the home feed |
+| `categories.json` | Ordered list of category names and the channel → category assignments |
 | `requested.json` | Set of video IDs you've queued for download |
+| `deleted.json` | Video IDs you've deleted, so they don't reappear as pending before TA's index catches up |
 | `auto_download.json` | List of channel IDs with auto-download enabled |
 | `stats.json` | Weekly request counts (keyed by ISO week, e.g. `"2025-W24": 12`) |
 | `settings.json` | App-level preferences (`watch_url`) |

@@ -76,24 +76,7 @@ async def channels_page(request: Request, sort: str = "pending-desc"):
     ta = request.app.state.ta
     favorites = set(get_favorites())
 
-    # Fetch first page to learn total page count, then fetch remaining pages concurrently
-    first = await ta.get_subscribed_channels(page=0)
-    last_page = first.get("paginate", {}).get("last_page", 0)
-    raw = list(first.get("data", []))
-
-    if last_page > 0:
-        rest = await asyncio.gather(*[ta.get_subscribed_channels(page=p) for p in range(1, last_page + 1)])
-        for r in rest:
-            raw.extend(r.get("data", []))
-
-    # Deduplicate by channel_id — TA's pagination metadata can be inconsistent
-    seen: set[str] = set()
-    channels: list[dict] = []
-    for c in raw:
-        cid = c.get("channel_id")
-        if cid and cid not in seen:
-            seen.add(cid)
-            channels.append(c)
+    channels = await ta.get_all_subscribed_channels()
 
     # Fetch pending counts for all channels concurrently
     counts = await asyncio.gather(*[_pending_count(ta, c["channel_id"]) for c in channels])
@@ -264,7 +247,10 @@ async def restore_all_ignored(request: Request, channel_id: str):
         return HTMLResponse(
             '<span style="font-size:0.72rem;color:var(--c-text4)">Nothing to restore</span>'
         )
-    await asyncio.gather(*[ta.restore_video(v["youtube_id"]) for v in ignored], return_exceptions=True)
+    await asyncio.gather(
+        *[ta.restore_video(v["youtube_id"], auto_start=bool(v.get("auto_start"))) for v in ignored],
+        return_exceptions=True,
+    )
     del_tracker.remove_many({v["youtube_id"] for v in ignored})
     from fastapi.responses import Response as FastAPIResponse
     return FastAPIResponse(headers={"HX-Refresh": "true"})
