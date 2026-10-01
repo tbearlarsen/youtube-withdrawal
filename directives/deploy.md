@@ -16,11 +16,13 @@ A deploy needs:
 
 **This project's own session has (1) but not (2)** — confirmed 2026-10-01: `ssh claude@10.0.0.101` is refused (`Permission denied (publickey,password)`), and the code-server container has no `docker` binary or socket. The **home-server session does have both** (confirmed by it deploying `c11165b` 2026-10-01). So from here: commit and push, then ask the home-server session to deploy (`ListAgents` → `SendMessage` to it), including the commit hash and anything the deploy needs to know. If no session with that access is running, say so to the user rather than handing them commands.
 
+**The user may still have to approve the run.** The home-server session's auto-mode classifier blocked `deploy.sh` on 2026-10-01 until the user approved it — a one-off approval, not a standing rule. Unless a Bash permission rule for `bash /projects/youtube-withdrawal/execution/deploy.sh` is added in that session, expect a prompt there; don't tell the user a deploy will happen with no involvement from them.
+
 ## Tool
 ```bash
 bash /projects/youtube-withdrawal/execution/deploy.sh
 ```
-(or the copy in `/docker/youtube-withdrawal/execution/` — the script uses an absolute `DEPLOY_DIR`, so which copy runs doesn't matter; the dev checkout's is newer until the pull.)
+Prefer this dev-checkout copy: the script uses an absolute `DEPLOY_DIR`, so it works from anywhere, and the copy in `/docker/youtube-withdrawal/execution/` is whatever the *last* deploy pulled — as of 2026-10-01 (deploy checkout at `943cc24`) that copy still has the restore bug fixed in `c4b5add`.
 
 It does, with a hard pass/fail exit code:
 1. Backs up `/docker/youtube-withdrawal/data/` to `/docker/youtube-withdrawal-data-backup/` (overwritten each deploy).
