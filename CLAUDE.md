@@ -103,7 +103,7 @@ TubeArchivist's own API/database is canonical for all channel, video, and downlo
 | `deleted.json` | Locally-tracked "you deleted this" video IDs, so a video you deleted doesn't ghost back into the pending view before TA's own index catches up (see `app/deleted.py`; `pending.py` and `videos.py` filter on it) |
 | `auto_download.json` | Which channels have auto-download enabled (TA has no per-channel auto-start API) |
 | `stats.json` | Weekly request counts |
-| `settings.json` | App-level preferences (currently just `watch_url`) |
+| `settings.json` | App-level preferences: `watch_url`, plus the library visibility toggles `hide_watched` / `hide_downloaded` (added 2026-10-01) |
 
 **Why a local requested tracker, not a live TA read:** setting a video's status to `priority` in TubeArchivist writes to Elasticsearch with a short indexing delay — reading the video back immediately can still show the old status. `requested.json` is optimistic UI state, reconciled against TA's actual queue on startup and on queue page loads. Don't "simplify" this into a direct API read; it was built this way after hitting the actual staleness bug.
 

@@ -1,0 +1,25 @@
+{# Library visibility switches. Set show_downloaded_toggle to also offer "Downloaded" (Home only). #}
+{% macro switch(key, label, shown, enabled=true) %}
+<button hx-post="/settings/visibility" hx-vals='{"key": "{{ key }}"}' hx-swap="none"
+        {% if enabled %}title="{{ 'Hide' if shown else 'Show' }} {{ label | lower }} videos"{% else %}disabled title="Downloaded videos are hidden"{% endif %}
+        style="display:inline-flex;align-items:center;gap:0.45rem;background:none;border:none;padding:0.2rem 0;
+               cursor:{{ 'pointer' if enabled else 'default' }};opacity:{{ 1 if enabled else 0.4 }};
+               font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;font-family:system-ui,sans-serif;
+               color:{{ 'var(--c-text2)' if shown else 'var(--c-text4)' }}">
+    <span style="position:relative;width:1.6rem;height:0.9rem;border-radius:999px;flex-shrink:0;
+                 background-color:{{ 'var(--c-queued)' if shown else 'var(--c-border)' }}">
+        <span style="position:absolute;top:0.1rem;left:{{ '0.8rem' if shown else '0.1rem' }};width:0.7rem;height:0.7rem;border-radius:50%;background:#fff"></span>
+    </span>
+    {{ label }}
+</button>
+{% endmacro %}
+
+{% set _hide_downloaded = app_setting("hide_downloaded") %}
+<div class="flex items-center gap-4" style="flex-wrap:wrap">
+    {% if show_downloaded_toggle is defined and show_downloaded_toggle %}
+    {{ switch("hide_downloaded", "Downloaded", not _hide_downloaded) }}
+    {{ switch("hide_watched", "Watched", not app_setting("hide_watched"), enabled=not _hide_downloaded) }}
+    {% else %}
+    {{ switch("hide_watched", "Watched", not app_setting("hide_watched")) }}
+    {% endif %}
+</div>

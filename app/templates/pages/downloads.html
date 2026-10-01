@@ -14,6 +14,7 @@
             </p>
             {% endif %}
         </div>
+        {% include "partials/visibility_toggles.html" %}
     </div>
 
     {% if videos %}
@@ -26,7 +27,7 @@
     {% else %}
     <div class="flex flex-col items-center justify-center mt-24 text-center">
         <p class="text-gray-400" style="font-family:Georgia,'Times New Roman',serif;font-size:1.1rem">No downloads yet</p>
-        <p class="text-gray-500 mt-2" style="font-size:0.75rem">Request videos from the Home or Channels tab.</p>
+        <p class="text-gray-500 mt-2" style="font-size:0.75rem">{% if app_setting("hide_watched") %}Watched videos are hidden — use the switch above to show them.{% else %}Request videos from the Home or Channels tab.{% endif %}</p>
     </div>
     {% endif %}
 

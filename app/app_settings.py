@@ -5,7 +5,12 @@ _FILE = Path("data/settings.json")
 _DEFAULTS = {
     "watch_url": "",
     "home_limit": 200,
+    # Library visibility toggles (Home, Downloads, channel Downloaded tabs)
+    "hide_watched": False,
+    "hide_downloaded": False,
 }
+
+VISIBILITY_KEYS = ("hide_watched", "hide_downloaded")
 
 
 def _load() -> dict:
@@ -34,3 +39,10 @@ def set(key: str, value) -> None:
     data = _load()
     data[key] = value
     _save(data)
+
+
+def visible_downloads(videos: list[dict]) -> list[dict]:
+    """Downloaded videos minus watched ones, if the user hides watched videos."""
+    if not get("hide_watched"):
+        return videos
+    return [v for v in videos if not (v.get("player") or {}).get("watched")]

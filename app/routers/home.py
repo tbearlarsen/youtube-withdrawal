@@ -2,7 +2,7 @@ import asyncio
 
 from fastapi import APIRouter, Request
 
-from app import categories, requested as req_tracker, deleted as del_tracker
+from app import app_settings, categories, requested as req_tracker, deleted as del_tracker
 from app.favorites import get_favorites
 from app.stats import get_weekly_requests
 from app.templating import templates
@@ -36,7 +36,7 @@ async def home_page(request: Request, view: str = "grouped"):
         ta.get_all_download_items(channel_id=cid, status="pending", vid_type="videos")
         for cid in favorite_ids
     ]
-    downloaded_tasks = [
+    downloaded_tasks = [] if app_settings.get("hide_downloaded") else [
         ta.get_video_list(channel_id=cid, page=0, sort="published", order="desc")
         for cid in favorite_ids
     ]
@@ -66,6 +66,7 @@ async def home_page(request: Request, view: str = "grouped"):
         if vid_id and vid_id not in seen:
             seen.add(vid_id)
             downloaded_videos.append(v)
+    downloaded_videos = app_settings.visible_downloads(downloaded_videos)
 
     for v in pending_videos:
         v["_type"] = "pending"

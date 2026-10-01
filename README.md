@@ -41,6 +41,7 @@ There is no separate database. No duplicate download logic. The seven JSON files
 - **Auto-download** — per-channel toggle that automatically requests every new pending video from that channel
 - **Settings** — directly controls TubeArchivist configuration via its API: subtitles, SponsorBlock, download format, comments, speed limits, subscription scan schedule, videos indexed per scan, and more
 - **Backlog cleanup** — bulk-ignore videos older than a chosen age, or purge all pending shorts and streams
+- **Hide watched / downloaded** — switches on Home, Downloads, and channel Downloaded tabs to hide watched videos everywhere, or downloaded videos from Home; saved as a preference, not per visit
 - **Light / dark / system theme** — stored in the browser; no server-side account needed
 
 ---
@@ -277,7 +278,7 @@ The `data/` volume holds seven small JSON files. They require no migration — m
 | `deleted.json` | Video IDs you've deleted, so they don't reappear as pending before TA's index catches up |
 | `auto_download.json` | List of channel IDs with auto-download enabled |
 | `stats.json` | Weekly request counts (keyed by ISO week, e.g. `"2025-W24": 12`) |
-| `settings.json` | App-level preferences (`watch_url`) |
+| `settings.json` | App-level preferences (`watch_url`, and the `hide_watched` / `hide_downloaded` visibility toggles) |
 
 All TubeArchivist configuration (download settings, subscription sizes, scan schedule) lives in TubeArchivist itself and is never duplicated here.
 

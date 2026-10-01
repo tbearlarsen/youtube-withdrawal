@@ -17,6 +17,9 @@
     <div class="flex flex-col items-center justify-center mt-24 text-center">
         <p class="text-gray-300" style="font-family:Georgia,'Times New Roman',serif;font-size:1.1rem">All caught up</p>
         <p class="text-gray-500 mt-2" style="font-size:0.75rem">No pending or downloaded videos from your favorite channels.</p>
+        {% if app_setting("hide_downloaded") or app_setting("hide_watched") %}
+        <div class="mt-6">{% set show_downloaded_toggle = true %}{% include "partials/visibility_toggles.html" %}</div>
+        {% endif %}
     </div>
 
     {% else %}
@@ -26,11 +29,15 @@
             {% if capped %}Showing {{ videos | length }} of {{ total }}{% else %}{{ total }} video{{ 's' if total != 1 }}{% endif %}
             from your favorites
         </p>
-        {% if weekly_requests %}
-        <p style="font-size:0.6rem;letter-spacing:0.08em;color:var(--c-text4)">
-            {{ weekly_requests }} requested this week
-        </p>
-        {% endif %}
+        <div class="flex items-center gap-5" style="flex-wrap:wrap;justify-content:flex-end">
+            {% set show_downloaded_toggle = true %}
+            {% include "partials/visibility_toggles.html" %}
+            {% if weekly_requests %}
+            <p style="font-size:0.6rem;letter-spacing:0.08em;color:var(--c-text4)">
+                {{ weekly_requests }} requested this week
+            </p>
+            {% endif %}
+        </div>
     </div>
 
     {% include "partials/category_toc.html" %}

@@ -235,3 +235,11 @@ async def save_watch_url(url: str = Form("")):
     )
 
 
+
+
+@router.post("/visibility")
+async def toggle_visibility(key: str = Form(...)):
+    """Flip a library visibility toggle (hide watched / hide downloaded) and reload the page."""
+    if key in app_settings.VISIBILITY_KEYS:
+        app_settings.set(key, not app_settings.get(key))
+    return HTMLResponse("", headers={"HX-Refresh": "true"})

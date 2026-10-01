@@ -3,7 +3,7 @@ import asyncio
 from fastapi import APIRouter, Query, Request
 from fastapi.responses import HTMLResponse
 
-from app import auto_download as auto_dl, categories
+from app import app_settings, auto_download as auto_dl, categories
 from app.favorites import is_favorite
 from app import stats, requested as req_tracker, deleted as del_tracker
 from app.templating import templates
@@ -23,7 +23,7 @@ async def channel_detail(request: Request, channel_id: str, status: str = "pendi
         deleted = del_tracker.get_all()
         videos = [v for v in raw_videos if v.get("youtube_id") not in deleted]
     else:
-        videos = raw_videos
+        videos = app_settings.visible_downloads(raw_videos) if status == "downloaded" else raw_videos
     if not channel_data:
         # Not indexed in TA yet (e.g. a channel you only requested a single video from)
         name = next((v.get("channel_name") for v in videos if v.get("channel_name")), channel_id)
