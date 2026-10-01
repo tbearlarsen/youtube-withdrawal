@@ -1,20 +1,13 @@
-{# Grouped-by-category sections, each capped with a link to the full category. Expects sections, base_path, base_qs. #}
-{% set section_cap = 12 %}
+{# Grouped-by-category sections, every video shown. Expects sections (with anchor). #}
 {% for section in sections %}
-<section class="mb-10">
-    <div class="flex items-baseline justify-between mb-4" style="border-bottom:1px solid var(--c-border);padding-bottom:0.5rem">
+<section id="{{ section.anchor }}" class="mb-10" style="scroll-margin-top:7rem">
+    <div class="mb-4" style="border-bottom:1px solid var(--c-border);padding-bottom:0.5rem">
         <h2 style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;font-weight:500;color:var(--c-text2);font-family:system-ui,sans-serif">
             {{ section.label }}
-            <span style="margin-left:0.4rem;color:var(--c-text4);font-weight:400">{{ section.videos | length }}</span>
+            <span style="margin-left:0.4rem;color:var(--c-text4);font-weight:400">{{ section.count }}</span>
         </h2>
-        {% if section.videos | length > section_cap %}
-        <a href="{{ base_path }}?{{ dict(base_qs, category=section.key) | urlencode }}"
-           style="font-size:0.62rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--c-accent);text-decoration:none">
-            View all →
-        </a>
-        {% endif %}
     </div>
-    {% set grid_videos = section.videos[:section_cap] %}
+    {% set grid_videos = section.videos %}
     {% include "partials/video_grid.html" %}
 </section>
 {% endfor %}

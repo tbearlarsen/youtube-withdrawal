@@ -30,7 +30,7 @@ There is no separate database. No duplicate download logic. The seven JSON files
 ## Features
 
 - **Home feed** — pending videos from favorited channels, newest first, filtered to regular videos only (no shorts or streams)
-- **Categories** — group channels into your own categories (one per channel); Home and All Videos show a section per category, with chips to filter to one
+- **Categories** — group channels into your own categories (one per channel); Home and All Videos show a section per category with every video, and a ☰ table of contents to jump between them
 - **Channel browser** — all TubeArchivist subscriptions with pending counts, sortable by name, pending count, or favorites-first
 - **Channel detail** — tabs for pending, downloaded, and ignored videos; per-channel controls to request all, ignore all, restore ignored, subscribe/unsubscribe, favorite, and enable auto-download
 - **Subscribe from the app** — search by channel URL, @handle, or YouTube channel ID; resolves the channel via yt-dlp without leaving the app
@@ -167,7 +167,7 @@ Shows pending videos (not yet downloaded) from your favorited channels, sorted b
 
 Click **Request** on any video to queue it for download. TubeArchivist will pick it up on its next download cycle. **Ignore** dismisses a video immediately; the × on a requested video cancels the request and puts it back to pending (on auto-download channels it ignores it instead, since the auto-download loop would otherwise just request it again). Click a channel name under any video to open that channel.
 
-If you've set up categories, videos are grouped into a section per category (each showing its newest 12, with **View all**), with Uncategorized last. Use the chips to show one category, or **List** for a single newest-first grid. All Videos works the same way.
+If you've set up categories, videos are grouped into a section per category, every video shown, with Uncategorized last. The ☰ button (it stays pinned while you scroll) opens a table of contents of the categories with their video counts; pick one to jump to its section. It also switches between **By category** and **One list** (a single newest-first grid). All Videos works the same way.
 
 ### Categories
 

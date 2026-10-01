@@ -13,7 +13,7 @@ _SORT_OPTIONS = {
 
 
 @router.get("/pending")
-async def pending_page(request: Request, sort: str = "newest", category: str = "", view: str = "grouped"):
+async def pending_page(request: Request, sort: str = "newest", view: str = "grouped"):
     if sort not in _SORT_OPTIONS:
         sort = "newest"
     deleted = del_tracker.get_all()
@@ -33,7 +33,7 @@ async def pending_page(request: Request, sort: str = "newest", category: str = "
         request,
         "pages/pending.html",
         {
-            **categories.build_view(videos, category, view),
+            **categories.build_view(videos, view),
             "total": len(videos),
             "base_path": "/pending",
             "base_qs": {"sort": sort},

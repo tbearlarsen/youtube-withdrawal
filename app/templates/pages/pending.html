@@ -16,7 +16,7 @@
         {% if sort_options is defined %}
         <div class="flex items-center gap-2 shrink-0 pb-0.5">
             {% for key, label in sort_options.items() %}
-            <a href="/pending?{{ dict(sort=key, category=current_category, view=current_view) | urlencode }}"
+            <a href="/pending?{{ dict(sort=key, view=current_view) | urlencode }}"
                style="font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;padding:0.3rem 0.7rem;
                       border-radius:999px;text-decoration:none;transition:background-color 120ms,color 120ms;
                       {% if current_sort == key %}
@@ -32,15 +32,13 @@
     </div>
 
     {% if total %}
-    {% include "partials/category_bar.html" %}
+    {% include "partials/category_toc.html" %}
 
     {% if view_mode == "grouped" %}
         {% include "partials/video_sections.html" %}
-    {% elif videos %}
+    {% else %}
         {% set grid_videos = videos %}
         {% include "partials/video_grid.html" %}
-    {% else %}
-    <p class="mt-16 text-center" style="font-size:0.75rem;color:var(--c-text4)">Nothing in this category.</p>
     {% endif %}
 
     {% else %}

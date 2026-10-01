@@ -98,14 +98,6 @@ def video_channel_id(video: dict) -> str | None:
     return video.get("channel_id") or (video.get("channel") or {}).get("channel_id")
 
 
-def filter_videos(videos: list[dict], category: str) -> list[dict]:
-    """Videos whose channel is in `category` (or in none, for UNCATEGORIZED)."""
-    assignments = get_assignments()
-    if category == UNCATEGORIZED:
-        return [v for v in videos if assignments.get(video_channel_id(v)) is None]
-    return [v for v in videos if assignments.get(video_channel_id(v)) == category]
-
-
 def group_videos(videos: list[dict]) -> list[dict]:
     """Split videos into sections in category order, Uncategorized last; empty sections dropped.
 
@@ -127,30 +119,20 @@ def group_videos(videos: list[dict]) -> list[dict]:
     return sections
 
 
-def build_view(videos: list[dict], category: str = "", view: str = "grouped") -> dict:
+def build_view(videos: list[dict], view: str = "grouped") -> dict:
     """Template context for a category-aware video page.
 
-    - a category selected: a flat grid of just that category ("filtered")
-    - otherwise grouped sections, or one flat grid if view == "list" or no categories exist
+    Grouped (default): one section per category, every video shown, with a
+    table of contents linking to each section's anchor. "list" (or no
+    categories at all): one flat grid.
     """
     sections = group_videos(videos)
-    counts = {s["key"]: len(s["videos"]) for s in sections}
-    names = get_categories()
-    chips = [{"key": n, "label": n, "count": counts.get(n, 0)} for n in names]
-    if names:
-        chips.append({"key": UNCATEGORIZED, "label": "Uncategorized", "count": counts.get(UNCATEGORIZED, 0)})
-
-    valid_keys = {c["key"] for c in chips}
-    if category in valid_keys:
-        mode = "filtered"
-        videos = filter_videos(videos, category)
-    else:
-        category = ""
-        mode = "flat" if view == "list" or not names else "grouped"
-
+    for i, section in enumerate(sections, 1):
+        section["anchor"] = f"cat-{i}"
+        section["count"] = len(section["videos"])
+    mode = "flat" if view == "list" or not get_categories() else "grouped"
     return {
-        "category_chips": chips,
-        "current_category": category,
+        "toc": sections if get_categories() else [],
         "current_view": "list" if view == "list" else "grouped",
         "view_mode": mode,
         "videos": videos,

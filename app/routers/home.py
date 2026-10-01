@@ -13,7 +13,7 @@ _HOME_LIMIT = 200
 
 
 @router.get("/")
-async def home_page(request: Request, category: str = "", view: str = "grouped"):
+async def home_page(request: Request, view: str = "grouped"):
     ta = request.app.state.ta
     favorite_ids = get_favorites()
 
@@ -75,7 +75,7 @@ async def home_page(request: Request, category: str = "", view: str = "grouped")
     all_videos = pending_videos + downloaded_videos
     all_videos.sort(key=lambda v: v.get("published", "0"), reverse=True)
 
-    ctx = categories.build_view(all_videos, category, view)
+    ctx = categories.build_view(all_videos, view)
     total = len(ctx["videos"])
     if ctx["view_mode"] != "grouped":
         ctx["videos"] = ctx["videos"][:_HOME_LIMIT]
