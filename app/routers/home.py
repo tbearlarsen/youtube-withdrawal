@@ -27,7 +27,6 @@ async def home_page(request: Request, view: str = "grouped"):
                 "downloaded_videos": [],
                 "no_favorites": True,
                 "active_page": "home",
-                "active_section": "home",
                 "weekly_requests": get_weekly_requests(),
             },
         )
@@ -91,7 +90,6 @@ async def home_page(request: Request, view: str = "grouped"):
             "capped": ctx["view_mode"] != "grouped" and total > _HOME_LIMIT,
             "no_favorites": False,
             "active_page": "home",
-            "active_section": "home",
             "weekly_requests": get_weekly_requests(),
             "show_channel": True,
             "requested_ids": req_tracker.get_all(),

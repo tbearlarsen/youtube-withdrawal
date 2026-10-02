@@ -39,7 +39,6 @@ async def pending_page(request: Request, sort: str = "newest", view: str = "grou
             "base_path": "/pending",
             "base_qs": {"sort": sort},
             "active_page": "pending",
-            "active_section": "library",
             "show_channel": True,
             "requested_ids": req_tracker.get_all(),
             "current_sort": sort,

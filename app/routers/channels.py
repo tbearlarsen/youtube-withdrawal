@@ -60,6 +60,12 @@ async def _pending_count(ta, channel_id: str) -> int:
         return 0
 
 
+async def pending_counts(ta, channels: list[dict]) -> dict[str, int]:
+    """channel_id -> number of pending videos, fetched concurrently."""
+    counts = await asyncio.gather(*[_pending_count(ta, c["channel_id"]) for c in channels])
+    return {c["channel_id"]: count for c, count in zip(channels, counts)}
+
+
 SORT_OPTIONS = {
     "favorites": "Favorites first",
     "alpha":     "A → Z",
@@ -78,13 +84,11 @@ async def channels_page(request: Request, sort: str = "pending-desc"):
 
     channels = await ta.get_all_subscribed_channels()
 
-    # Fetch pending counts for all channels concurrently
-    counts = await asyncio.gather(*[_pending_count(ta, c["channel_id"]) for c in channels])
-    pending_counts = {c["channel_id"]: count for c, count in zip(channels, counts)}
+    counts = await pending_counts(ta, channels)
 
     # Apply sort
     name = lambda c: c.get("channel_name", "").lower()
-    pending = lambda c: pending_counts.get(c["channel_id"], 0)
+    pending = lambda c: counts.get(c["channel_id"], 0)
     fav_first = lambda c: c["channel_id"] not in favorites
 
     if sort == "alpha":
@@ -105,9 +109,8 @@ async def channels_page(request: Request, sort: str = "pending-desc"):
         {
             "channels": channels,
             "active_page": "channels",
-            "active_section": "library",
             "favorites": favorites,
-            "pending_counts": pending_counts,
+            "pending_counts": counts,
             "auto_download_ids": auto_download_ids,
             "current_sort": sort,
             "sort_options": SORT_OPTIONS,

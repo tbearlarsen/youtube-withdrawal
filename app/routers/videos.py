@@ -49,7 +49,6 @@ async def channel_detail(
             "channel_id": channel_id,
             "videos": videos,
             "active_page": "channels",
-            "active_section": "library",
             "current_status": status,
             "current_sort": sort,
             "sort_options": SORT_OPTIONS,
@@ -82,7 +81,6 @@ async def video_detail_page(request: Request, video_id: str):
         "channel_id": channel_id,
         "is_queued": is_queued,
         "requested_ids": requested_ids,
-        "active_section": "library",
         "active_page": "channels",
     })
 

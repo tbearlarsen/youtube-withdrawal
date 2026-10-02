@@ -98,25 +98,47 @@ def video_channel_id(video: dict) -> str | None:
     return video.get("channel_id") or (video.get("channel") or {}).get("channel_id")
 
 
+def _group(items: list[dict], channel_id_of) -> list[tuple[str, list[dict]]]:
+    """Bucket items by their channel's category, in category order, Uncategorized last.
+
+    Returns (key, items) pairs, key being a category name or UNCATEGORIZED; empty
+    buckets dropped, input order preserved within each.
+    """
+    data = _load()
+    assignments = data["assignments"]
+    buckets: dict[str, list[dict]] = {name: [] for name in data["categories"]}
+    uncategorized: list[dict] = []
+    for item in items:
+        cat = assignments.get(channel_id_of(item))
+        (buckets[cat] if cat in buckets else uncategorized).append(item)
+    groups = [(name, vals) for name, vals in buckets.items() if vals]
+    if uncategorized:
+        groups.append((UNCATEGORIZED, uncategorized))
+    return groups
+
+
+def _label(key: str) -> str:
+    return "Uncategorized" if key == UNCATEGORIZED else key
+
+
 def group_videos(videos: list[dict]) -> list[dict]:
     """Split videos into sections in category order, Uncategorized last; empty sections dropped.
 
     Each section: {"key": category name or UNCATEGORIZED, "label": str, "videos": [...]}.
     Order within a section is preserved from the input.
     """
-    data = _load()
-    assignments = data["assignments"]
-    buckets: dict[str, list[dict]] = {name: [] for name in data["categories"]}
-    uncategorized: list[dict] = []
-    for v in videos:
-        cat = assignments.get(video_channel_id(v))
-        (buckets[cat] if cat in buckets else uncategorized).append(v)
-    sections = [
-        {"key": name, "label": name, "videos": vids} for name, vids in buckets.items() if vids
+    return [
+        {"key": key, "label": _label(key), "videos": vids}
+        for key, vids in _group(videos, video_channel_id)
     ]
-    if uncategorized:
-        sections.append({"key": UNCATEGORIZED, "label": "Uncategorized", "videos": uncategorized})
-    return sections
+
+
+def group_channels(channels: list[dict]) -> list[dict]:
+    """Same as group_videos, for subscribed channels: sections with a "channels" list."""
+    return [
+        {"key": key, "label": _label(key), "channels": chans}
+        for key, chans in _group(channels, lambda c: c.get("channel_id"))
+    ]
 
 
 def build_view(videos: list[dict], view: str = "grouped") -> dict:

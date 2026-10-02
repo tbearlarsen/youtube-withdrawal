@@ -45,7 +45,6 @@ async def settings_page(request: Request):
         "pages/settings.html",
         {
             "active_page": "settings",
-            "active_section": "settings",
             "watch_url_value": current.get("watch_url", ""),
             "last_scan": last_scan,
             "scan_schedule": scan_schedule,

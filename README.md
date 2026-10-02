@@ -30,7 +30,8 @@ There is no separate database. No duplicate download logic. The seven JSON files
 ## Features
 
 - **Home feed** — pending videos from favorited channels, newest first, filtered to regular videos only (no shorts or streams)
-- **Categories** — group channels into your own categories (one per channel); Home and All Videos show a section per category with every video, and a ☰ table of contents to jump between them
+- **Navigation** — Home, Channels, Categories, Videos, Queue and Downloads are all top-level tabs (a bottom bar on narrow screens), plus a Watch link if one is set
+- **Categories** — group channels into your own categories (one per channel); a Categories page shows every channel grouped under its category, and Home and All Videos show a section per category with every video, and a ☰ table of contents to jump between them
 - **Channel browser** — all TubeArchivist subscriptions with pending counts, sortable by name, pending count, or favorites-first
 - **Channel detail** — tabs for pending, downloaded, and ignored videos; per-channel controls to request all, ignore all, restore ignored, subscribe/unsubscribe, favorite, and enable auto-download
 - **Subscribe from the app** — search by channel URL, @handle, or YouTube channel ID; resolves the channel via yt-dlp without leaving the app
@@ -154,7 +155,7 @@ Everything else is configured in the app's Settings page. All download and subsc
 
 1. Open the app and go to **Settings**.
 2. Under **Maintenance → Scan subscriptions**, click **Scan now** to pull in your latest subscriptions and pending videos from TubeArchivist.
-3. Go to **Library → Channels** and star the channels you want on your home feed.
+3. Go to **Channels** and star the channels you want on your home feed.
 4. Optionally set an auto-scan schedule so TubeArchivist picks up new videos on a regular cadence.
 5. If you have a large backlog you'd rather ignore, use **Backlog Cleanup → Start Fresh** to bulk-ignore everything older than a chosen age.
 
@@ -172,7 +173,7 @@ If you've set up categories, videos are grouped into a section per category, eve
 
 ### Categories
 
-Open **Channels → Categories** to add, rename, reorder, and delete categories, and to assign every channel from one list (filter to *Uncategorized only* to sort the rest). A channel's own page also has a category dropdown. Deleting a category leaves its channels uncategorized.
+The **Categories** tab shows every subscribed channel grouped under its category (in your category order, Uncategorized last), with channel and pending counts per category. **Manage** on that page is where you add, rename, reorder, and delete categories, and to assign every channel from one list (filter to *Uncategorized only* to sort the rest). A channel's own page also has a category dropdown. Deleting a category leaves its channels uncategorized.
 
 ### Channel browser
 

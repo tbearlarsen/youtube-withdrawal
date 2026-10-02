@@ -15,7 +15,6 @@ async def downloads_page(request: Request):
         {
             "videos": videos,
             "active_page": "downloads",
-            "active_section": "library",
             "show_channel": True,
         },
     )
