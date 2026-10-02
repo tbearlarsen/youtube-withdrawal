@@ -193,7 +193,7 @@ Per-channel actions in the header: set category, toggle favorite (shows on home 
 
 ### Auto-download
 
-When enabled for a channel, YouTube Withdrawal automatically requests every pending video from that channel. This bypasses the manual selection step — useful for channels where you always want everything.
+When enabled for a channel, YouTube Withdrawal automatically requests every pending video from that channel. This bypasses the manual selection step — useful for channels where you always want everything. Channels with it on show a green download icon next to the favorite star on their card (Channels and Categories pages).
 
 Auto-download is tracked locally in `data/auto_download.json` because TubeArchivist has no per-channel auto-start API. The actual downloading is still done by TubeArchivist; the app just sets each video's status to `priority` in TA's queue.
 
