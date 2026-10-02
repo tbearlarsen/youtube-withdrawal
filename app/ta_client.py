@@ -179,6 +179,13 @@ class TAClient:
         r = await self._client.post("/api/channel/", json=payload)
         r.raise_for_status()
 
+    async def set_channel_overwrites(self, channel_id: str, overwrites: dict) -> None:
+        """Per-channel TA settings. A None value removes that overwrite (falls back to global)."""
+        r = await self._client.post(
+            f"/api/channel/{channel_id}/", json={"channel_overwrites": overwrites}
+        )
+        r.raise_for_status()
+
     async def get_priority_downloads(self) -> list[dict]:
         """Fetch all user-requested (priority) downloads across all pending pages."""
         first = await self.get_download_list(status="pending", page=0)

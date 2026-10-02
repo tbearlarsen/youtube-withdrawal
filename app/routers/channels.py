@@ -277,3 +277,81 @@ async def ignore_all_channel(request: Request, channel_id: str):
     await asyncio.gather(*[ta.ignore_video(v["youtube_id"]) for v in to_ignore], return_exceptions=True)
     from fastapi.responses import Response as FastAPIResponse
     return FastAPIResponse(headers={"HX-Refresh": "true"})
+
+
+# (form field, TA channel overwrite key, TA global config key, label)
+INDEX_LIMIT_FIELDS = [
+    ("videos", "subscriptions_channel_size",        "channel_size",        "Videos"),
+    ("shorts", "subscriptions_shorts_channel_size", "shorts_channel_size", "Shorts"),
+    ("live",   "subscriptions_live_channel_size",   "live_channel_size",   "Live"),
+]
+
+
+def index_limits(channel: dict, ta_config: dict) -> list[dict]:
+    """Per-type index limit for a channel: its own overwrite (None = uses global) plus the global."""
+    overwrites = channel.get("channel_overwrites") or {}
+    subs = ta_config.get("subscriptions") or {}
+    rows = []
+    for field, ow_key, cfg_key, label in INDEX_LIMIT_FIELDS:
+        own = overwrites.get(ow_key)
+        default = subs.get(cfg_key) or 0
+        rows.append({
+            "field": field, "label": label, "own": own, "default": default,
+            "effective": own if own is not None else default,
+        })
+    return rows
+
+
+def _limit_msg(text: str, ok: bool) -> HTMLResponse:
+    color = "rgb(74 222 128)" if ok else "rgb(248 113 113)"
+    return HTMLResponse(f'<span style="font-size:0.65rem;color:{color}">{text}</span>')
+
+
+@router.post("/channels/{channel_id}/index-limits")
+async def save_index_limits(
+    request: Request,
+    channel_id: str,
+    videos: str = Form(""),
+    shorts: str = Form(""),
+    live: str = Form(""),
+):
+    """Blank = use the global setting from Settings; 0 = don't index that type for this channel."""
+    ta = request.app.state.ta
+    submitted = {"videos": videos, "shorts": shorts, "live": live}
+    new: dict[str, int | None] = {}
+    for field, ow_key, _, label in INDEX_LIMIT_FIELDS:
+        raw = submitted[field].strip()
+        if not raw:
+            new[ow_key] = None
+            continue
+        if not raw.isdigit():
+            return _limit_msg(f"{label}: enter a whole number or leave blank", ok=False)
+        new[ow_key] = int(raw)
+
+    try:
+        channel, ta_config = await asyncio.gather(ta.get_channel(channel_id), ta.get_ta_config())
+    except Exception:
+        return _limit_msg("Couldn't reach TubeArchivist", ok=False)
+    if not channel:
+        return _limit_msg("Channel isn't in TubeArchivist yet", ok=False)
+
+    # Auto-download requests everything pending on the channel, so raising the limit would
+    # quietly mass-download the older backlog the next scan pulls in. Make that a deliberate step.
+    if auto_dl.is_auto(channel_id):
+        current = {r["field"]: r["effective"] for r in index_limits(channel, ta_config)}
+        subs = ta_config.get("subscriptions") or {}
+        for field, ow_key, cfg_key, label in INDEX_LIMIT_FIELDS:
+            proposed = new[ow_key] if new[ow_key] is not None else (subs.get(cfg_key) or 0)
+            if proposed > current[field]:
+                return _limit_msg("Turn off auto-download before raising limits", ok=False)
+
+    # TA stores an explicit None for a key that was never set, so only send real changes.
+    existing = channel.get("channel_overwrites") or {}
+    changes = {k: v for k, v in new.items() if existing.get(k) != v}
+    if not changes:
+        return _limit_msg("No changes", ok=True)
+    try:
+        await ta.set_channel_overwrites(channel_id, changes)
+    except Exception:
+        return _limit_msg("Save failed", ok=False)
+    return _limit_msg("Saved — applies on the next scan", ok=True)

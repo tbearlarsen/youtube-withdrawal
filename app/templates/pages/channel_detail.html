@@ -27,6 +27,7 @@
                 <p class="text-gray-500 mt-0.5" style="font-size:0.63rem;letter-spacing:0.05em">
                     Last scanned {{ channel.channel_last_refresh | time_ago }}
                     {% if channel.channel_subs %} · {{ "{:,}".format(channel.channel_subs) }} subscribers{% endif %}
+                    {% if index_limits and index_limits[0].own is not none %} · Indexes last {{ index_limits[0].own }} videos{% endif %}
                 </p>
                 {% if categories %}
                 <div class="mt-2">{% include "partials/category_select.html" %}</div>
@@ -131,6 +132,35 @@ document.addEventListener('click', function(e) {
                         onmouseout="this.style.backgroundColor=''">
                     {% if is_favorite %}Remove from Favorites{% else %}Add to Favorites{% endif %}
                 </button>
+
+                {% if index_limits %}
+                <div style="height:1px;background:var(--c-border);margin:0 0.75rem"></div>
+
+                <!-- Per-channel index limits (TA channel_overwrites); blank = global default -->
+                <form hx-post="/channels/{{ channel.channel_id }}/index-limits"
+                      hx-target="#index-limit-result"
+                      hx-swap="innerHTML"
+                      class="px-4 py-2.5">
+                    <p style="font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--c-text4);margin-bottom:0.4rem">
+                        Indexed per scan
+                    </p>
+                    {% for row in index_limits %}
+                    <label class="flex items-center justify-between" style="margin-bottom:0.3rem;font-size:0.72rem;color:var(--c-text2)">
+                        {{ row.label }}
+                        <input type="number" name="{{ row.field }}" min="0"
+                               value="{{ row.own if row.own is not none else '' }}"
+                               placeholder="{{ row.default }}"
+                               class="rounded px-2 py-1 border text-right"
+                               style="width:4.5rem;font-size:0.72rem;background-color:var(--c-surface2);color:var(--c-text);border-color:var(--c-border)">
+                    </label>
+                    {% endfor %}
+                    <p style="font-size:0.6rem;color:var(--c-text4);margin-top:0.2rem">Blank = default from Settings · 0 = off</p>
+                    <div class="flex items-center justify-between" style="margin-top:0.4rem;gap:0.5rem">
+                        <span id="index-limit-result"></span>
+                        <button type="submit" class="btn-secondary" style="padding:0.2rem 0.6rem;font-size:0.65rem">Save</button>
+                    </div>
+                </form>
+                {% endif %}
 
                 <div style="height:1px;background:var(--c-border);margin:0 0.75rem"></div>
 

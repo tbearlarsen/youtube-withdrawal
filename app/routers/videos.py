@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse
 
 from app import app_settings, auto_download as auto_dl, categories
 from app.favorites import is_favorite
+from app.routers.channels import index_limits
 from app import stats, requested as req_tracker, deleted as del_tracker
 from app.templating import templates
 
@@ -14,11 +15,17 @@ router = APIRouter()
 @router.get("/channels/{channel_id}")
 async def channel_detail(request: Request, channel_id: str, status: str = "pending"):
     ta = request.app.state.ta
-    channel_data, raw_videos = await asyncio.gather(
+    channel_data, raw_videos, ta_config = await asyncio.gather(
         ta.get_channel(channel_id),
         ta.get_all_videos(channel_id=channel_id) if status == "downloaded"
         else ta.get_all_download_items(channel_id=channel_id, status=status),
+        ta.get_ta_config(),
+        return_exceptions=True,
     )
+    for result in (channel_data, raw_videos):
+        if isinstance(result, BaseException):
+            raise result
+    limits = None if isinstance(ta_config, BaseException) or not channel_data else index_limits(channel_data, ta_config)
     if status == "pending":
         deleted = del_tracker.get_all()
         videos = [v for v in raw_videos if v.get("youtube_id") not in deleted]
@@ -40,6 +47,7 @@ async def channel_detail(request: Request, channel_id: str, status: str = "pendi
             "current_status": status,
             "is_favorite": is_favorite(channel_id),
             "is_auto_download": auto_dl.is_auto(channel_id),
+            "index_limits": limits,
             "categories": categories.get_categories(),
             "sel_channel_id": channel_id,
             "sel_current": categories.category_of(channel_id),
