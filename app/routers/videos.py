@@ -4,6 +4,7 @@ from fastapi import APIRouter, Query, Request
 from fastapi.responses import HTMLResponse
 
 from app import app_settings, auto_download as auto_dl, categories
+from app.sorting import DEFAULT_SORT, SORT_OPTIONS, sort_videos
 from app.favorites import is_favorite
 from app.routers.channels import index_limits
 from app import stats, requested as req_tracker, deleted as del_tracker
@@ -13,7 +14,11 @@ router = APIRouter()
 
 
 @router.get("/channels/{channel_id}")
-async def channel_detail(request: Request, channel_id: str, status: str = "pending"):
+async def channel_detail(
+    request: Request, channel_id: str, status: str = "pending", sort: str = DEFAULT_SORT
+):
+    if sort not in SORT_OPTIONS:
+        sort = DEFAULT_SORT
     ta = request.app.state.ta
     channel_data, raw_videos, ta_config = await asyncio.gather(
         ta.get_channel(channel_id),
@@ -31,6 +36,7 @@ async def channel_detail(request: Request, channel_id: str, status: str = "pendi
         videos = [v for v in raw_videos if v.get("youtube_id") not in deleted]
     else:
         videos = app_settings.visible_downloads(raw_videos) if status == "downloaded" else raw_videos
+    videos = sort_videos(videos, sort)
     if not channel_data:
         # Not indexed in TA yet (e.g. a channel you only requested a single video from)
         name = next((v.get("channel_name") for v in videos if v.get("channel_name")), channel_id)
@@ -45,6 +51,8 @@ async def channel_detail(request: Request, channel_id: str, status: str = "pendi
             "active_page": "channels",
             "active_section": "library",
             "current_status": status,
+            "current_sort": sort,
+            "sort_options": SORT_OPTIONS,
             "is_favorite": is_favorite(channel_id),
             "is_auto_download": auto_dl.is_auto(channel_id),
             "index_limits": limits,

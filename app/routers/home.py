@@ -5,6 +5,7 @@ from fastapi import APIRouter, Request
 from app import app_settings, categories, requested as req_tracker, deleted as del_tracker
 from app.favorites import get_favorites
 from app.stats import get_weekly_requests
+from app.sorting import published_key
 from app.templating import templates
 
 router = APIRouter()
@@ -74,7 +75,7 @@ async def home_page(request: Request, view: str = "grouped"):
         v["_type"] = "downloaded"
 
     all_videos = pending_videos + downloaded_videos
-    all_videos.sort(key=lambda v: v.get("published", "0"), reverse=True)
+    all_videos.sort(key=published_key, reverse=True)
 
     ctx = categories.build_view(all_videos, view)
     total = len(ctx["videos"])

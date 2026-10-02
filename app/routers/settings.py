@@ -5,6 +5,7 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse
 
 from app import app_settings
+from app.sorting import published_key
 from app.templating import templates
 
 router = APIRouter(prefix="/settings")
@@ -63,7 +64,8 @@ async def ignore_before(request: Request, days: int = Form(...)):
     cutoff_str = cutoff.strftime("%Y%m%d")
 
     videos = await ta.get_all_pending()
-    to_ignore = [v for v in videos if (v.get("published") or "99999999") < cutoff_str]
+    # Normalize first: TA returns ISO timestamps, which don't string-compare against YYYYMMDD.
+    to_ignore = [v for v in videos if (published_key(v)[:8] or "99999999") < cutoff_str]
 
     if not to_ignore:
         return HTMLResponse(

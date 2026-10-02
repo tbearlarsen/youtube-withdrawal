@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request
 
 from app import categories, requested as req_tracker, deleted as del_tracker
+from app.sorting import published_key
 from app.templating import templates
 
 router = APIRouter()
@@ -23,11 +24,11 @@ async def pending_page(request: Request, sort: str = "newest", view: str = "grou
     ]
 
     if sort == "oldest":
-        videos.sort(key=lambda v: v.get("published", "0"))
+        videos.sort(key=published_key)
     elif sort == "channel":
-        videos.sort(key=lambda v: (v.get("channel_name", "").lower(), v.get("published", "0")))
+        videos.sort(key=lambda v: (v.get("channel_name", "").lower(), published_key(v)))
     else:
-        videos.sort(key=lambda v: v.get("published", "0"), reverse=True)
+        videos.sort(key=published_key, reverse=True)
 
     return templates.TemplateResponse(
         request,

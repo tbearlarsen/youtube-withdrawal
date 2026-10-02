@@ -81,7 +81,7 @@ document.addEventListener('click', function(e) {
     <div class="flex items-center">
         <div class="flex gap-1 flex-1">
             {% for status, label in [('pending','Videos'),('downloaded','Downloaded'),('ignore','Ignored')] %}
-            <a href="/channels/{{ channel.channel_id }}?status={{ status }}"
+            <a href="/channels/{{ channel.channel_id }}?{{ dict(status=status, sort=current_sort) | urlencode }}"
                class="px-4 py-3 border-b-2 transition-colors"
                style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;font-family:system-ui,sans-serif;font-weight:500;
                       {% if current_status == status %}border-color:var(--c-accent);color:var(--c-text){% else %}border-color:transparent;color:var(--c-text3){% endif %}">
@@ -219,9 +219,25 @@ document.addEventListener('click', function(e) {
 
 <!-- Video grid -->
 <div class="p-8">
-    {% if current_status == 'downloaded' %}
-    <div class="flex justify-end mb-4">{% include "partials/visibility_toggles.html" %}</div>
-    {% endif %}
+    <div class="flex items-center justify-between gap-4 mb-4" style="flex-wrap:wrap">
+        <div class="flex items-center gap-1" style="flex-wrap:wrap">
+            {% for key, label in sort_options.items() %}
+            <a href="/channels/{{ channel.channel_id }}?{{ dict(status=current_status, sort=key) | urlencode }}"
+               style="font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;padding:0.3rem 0.7rem;
+                      border-radius:999px;text-decoration:none;transition:background-color 120ms,color 120ms;
+                      {% if current_sort == key %}
+                      background-color:var(--c-hover);color:var(--c-text);font-weight:500
+                      {% else %}
+                      color:var(--c-text4)
+                      {% endif %}">
+                {{ label }}
+            </a>
+            {% endfor %}
+        </div>
+        {% if current_status == 'downloaded' %}
+        {% include "partials/visibility_toggles.html" %}
+        {% endif %}
+    </div>
     {% if videos %}
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4">
         {% for video in videos %}
