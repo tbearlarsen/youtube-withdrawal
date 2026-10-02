@@ -32,13 +32,6 @@
                     <p style="font-size:0.57rem;color:rgba(255,255,255,0.48)">
                         {{ channel.channel_last_refresh | time_ago }}
                     </p>
-                    {% if auto_download_ids is defined and channel.channel_id in auto_download_ids %}
-                    <span title="Auto-download on"
-                          style="font-size:0.5rem;color:rgba(255,255,255,0.7);letter-spacing:0.06em;
-                                 text-transform:uppercase;font-family:system-ui,sans-serif;font-weight:600">
-                        AUTO
-                    </span>
-                    {% endif %}
                 </div>
                 {% if pending_counts is defined and pending_counts.get(channel.channel_id, 0) > 0 %}
                 <span style="width:10px;height:10px;border-radius:50%;background:var(--c-accent);flex-shrink:0;display:inline-block"></span>
@@ -46,6 +39,16 @@
             </div>
         </div>
     </div>
+
+    <!-- Auto-download indicator (display only; toggled on the channel page), left of the star -->
+    {% if auto_download_ids is defined and channel.channel_id in auto_download_ids %}
+    <span class="absolute top-1.5 p-1 rounded-full" title="Auto-download on"
+          style="right:calc(0.375rem + 20px + 0.25rem);background-color:var(--c-queued);color:#fff;line-height:0">
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.25" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+        </svg>
+    </span>
+    {% endif %}
 
     <!-- Favorite star -->
     {% if favorites is defined %}

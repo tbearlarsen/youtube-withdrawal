@@ -4,7 +4,7 @@
 Rebuild and restart the live container after a code change. This is the one genuinely repeatable operational workflow in this project — everything else here is feature/UX work, not process.
 
 ## When to run
-Only when explicitly asked to deploy/redeploy — never automatically as part of Session Close, even after a commit+push. See `CLAUDE.md`'s Session Close section for why.
+After any change the user asked for is finished and verified locally: commit it, push, and deploy, without asking first (user, 2026-10-02: *"You dont have to keep asking me - yes talk to it and deploy"*). Not for half-finished or unverified work. See `CLAUDE.md`'s Session Close section.
 
 ## Who runs it — Claude, not the user
 
