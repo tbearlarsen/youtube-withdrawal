@@ -214,6 +214,8 @@ async def run_once(ta) -> None:
     new = sorted((v for v in todo if _downloaded_at(v) >= data["started_at"]), key=_downloaded_at)
     backlog = sorted((v for v in todo if _downloaded_at(v) < data["started_at"]),
                      key=_downloaded_at, reverse=True)
+    print(f"[yt-history] check: {len(new)} new, {len(backlog)} backlog left, "
+          f"{data['consecutive_failures']} consecutive failures", file=sys.stderr)
 
     if data["consecutive_failures"] >= ALERT_AFTER:
         # Broken state: one probe per check until a run succeeds again.
