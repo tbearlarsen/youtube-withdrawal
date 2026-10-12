@@ -3,6 +3,7 @@ data/*.json
 
 # Environment — contains secrets
 .env
+secrets/
 
 # Python
 __pycache__/

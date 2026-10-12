@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse
 
-from app import app_settings
+from app import app_settings, yt_history
 from app.sorting import published_key
 from app.templating import templates
 
@@ -244,3 +244,15 @@ async def toggle_visibility(key: str = Form(...)):
     if key in app_settings.VISIBILITY_KEYS:
         app_settings.set(key, not app_settings.get(key))
     return HTMLResponse("", headers={"HX-Refresh": "true"})
+
+
+@router.get("/yt-history", response_class=HTMLResponse)
+async def yt_history_status(request: Request):
+    try:
+        videos = await request.app.state.ta.get_all_videos()
+        ids = {v["youtube_id"] for v in videos if v.get("youtube_id")}
+    except Exception:
+        ids = None
+    return templates.TemplateResponse(
+        request, "partials/yt_history_status.html", {"h": yt_history.status(ids)}
+    )

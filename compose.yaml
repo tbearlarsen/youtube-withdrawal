@@ -9,8 +9,12 @@ services:
       - TA_URL=http://tubearchivist:8000
       - TA_API_KEY=${TA_API_KEY}
       - TA_PUBLIC_URL=${TA_PUBLIC_URL}
+      - NTFY_URL=${NTFY_URL:-}
+      - NTFY_TOPIC=${NTFY_TOPIC:-}
+      - NTFY_TOKEN=${NTFY_TOKEN:-}
     volumes:
       - ./data:/app/data
+      - ./secrets:/app/secrets
     networks:
       - tubearchivist_default
 

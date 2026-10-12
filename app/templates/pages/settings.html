@@ -15,6 +15,7 @@
                     ('s-navigation','Navigation'),
                     ('s-downloads','Downloads'),
                     ('s-backlog','Backlog Cleanup'),
+                    ('s-yt-history','YouTube History'),
                     ('s-maintenance','Maintenance')
                 ] %}
                 <li>
@@ -272,6 +273,15 @@
                     </div>
 
                 </form>
+            </section>
+
+            <!-- ── YouTube history sync ────────────────────────────── -->
+            <section id="s-yt-history" class="mb-8" style="scroll-margin-top:calc(52px + 1.5rem)">
+                <h2 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--c-text4)">YouTube History</h2>
+                <div class="rounded-xl border p-5" style="background-color:var(--c-surface);border-color:var(--c-border)"
+                     hx-get="/settings/yt-history" hx-trigger="load" hx-swap="innerHTML">
+                    <p class="text-xs" style="color:var(--c-text3)">Loading…</p>
+                </div>
             </section>
 
             <!-- ── Backlog cleanup ─────────────────────────────────── -->

@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 
-from app import auto_download as auto_dl, requested as req_tracker, deleted as del_tracker
+from app import auto_download as auto_dl, requested as req_tracker, deleted as del_tracker, yt_history
 from app.ta_client import TAClient
 from app.routers import categories, channels, videos, queue, home, settings, downloads, pending
 
@@ -63,12 +63,14 @@ async def lifespan(app: FastAPI):
     app.state.ta = TAClient()
     await _reconcile_requested(app.state.ta)
     auto_task = asyncio.create_task(_auto_request_loop(app))
+    history_task = asyncio.create_task(yt_history.loop(app.state.ta))
     yield
-    auto_task.cancel()
-    try:
-        await auto_task
-    except asyncio.CancelledError:
-        pass
+    for task in (auto_task, history_task):
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
     await app.state.ta.close()
 
 
