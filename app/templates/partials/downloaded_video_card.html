@@ -1,3 +1,4 @@
+{% set is_kept = video.youtube_id in kept_ids() %}
 <div class="video-card rounded-2xl overflow-hidden flex flex-col" style="background-color:var(--c-surface)">
 
     <!-- Thumbnail -->
@@ -47,6 +48,14 @@
             <div style="width:{{ video.player.progress | round(1) }}%;height:100%;background:var(--c-accent)"></div>
         </div>
         {% endif %}
+
+        {% if is_kept and not (video.player and video.player.watched) %}
+        <span class="absolute top-1.5 right-1.5 text-fixed-white"
+              style="font-size:0.52rem;letter-spacing:0.07em;text-transform:uppercase;font-family:system-ui,sans-serif;
+                     background:rgba(0,0,0,0.55);padding:0.15rem 0.5rem;border-radius:999px">
+            Kept
+        </span>
+        {% endif %}
     </div>
     </a>
 
@@ -72,13 +81,22 @@
         </p>
         {% endif %}
 
-        <!-- Delete -->
-        <div style="margin-top:0.65rem">
+        <!-- Keep (protects from TA auto-delete) + Delete -->
+        <div style="margin-top:0.65rem;display:flex;gap:0.4rem">
+            <button hx-post="/videos/{{ video.youtube_id }}/{{ 'unkeep' if is_kept else 'keep' }}{% if show_channel %}?show_channel=1{% endif %}"
+                    hx-target="closest .video-card"
+                    hx-swap="outerHTML"
+                    title="{{ 'Stop protecting this video from auto-delete' if is_kept else 'Mark unwatched and protect it from auto-delete' }}"
+                    style="flex:1;font-size:0.55rem;letter-spacing:0.07em;text-transform:uppercase;font-weight:500;font-family:system-ui,sans-serif;cursor:pointer;padding:0.3rem 0.65rem;border-radius:0.5rem;border:1px solid {{ 'var(--c-accent)' if is_kept else 'var(--c-border)' }};color:{{ 'var(--c-accent)' if is_kept else 'var(--c-text3)' }};background:transparent;transition:border-color 150ms,color 150ms"
+                    onmouseover="this.style.borderColor='var(--c-text3)';this.style.color='var(--c-text)'"
+                    onmouseout="this.style.borderColor='{{ 'var(--c-accent)' if is_kept else 'var(--c-border)' }}';this.style.color='{{ 'var(--c-accent)' if is_kept else 'var(--c-text3)' }}'">
+                {{ 'Unkeep' if is_kept else 'Keep' }}
+            </button>
             <button hx-delete="/videos/{{ video.youtube_id }}"
                     hx-target="closest .video-card"
                     hx-swap="outerHTML"
                     hx-confirm="Delete this video from TubeArchivist?"
-                    style="width:100%;font-size:0.55rem;letter-spacing:0.07em;text-transform:uppercase;font-weight:500;font-family:system-ui,sans-serif;cursor:pointer;padding:0.3rem 0.65rem;border-radius:0.5rem;border:1px solid var(--c-border);color:var(--c-text3);background:transparent;transition:border-color 150ms,color 150ms"
+                    style="flex:1;font-size:0.55rem;letter-spacing:0.07em;text-transform:uppercase;font-weight:500;font-family:system-ui,sans-serif;cursor:pointer;padding:0.3rem 0.65rem;border-radius:0.5rem;border:1px solid var(--c-border);color:var(--c-text3);background:transparent;transition:border-color 150ms,color 150ms"
                     onmouseover="this.style.borderColor='var(--c-text3)';this.style.color='var(--c-text)'"
                     onmouseout="this.style.borderColor='var(--c-border)';this.style.color='var(--c-text3)'">
                 Delete

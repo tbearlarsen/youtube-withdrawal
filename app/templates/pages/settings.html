@@ -102,6 +102,25 @@
             <!-- ── Downloads ──────────────────────────────────────── -->
             <section id="s-downloads" class="mb-8" style="scroll-margin-top:calc(52px + 1.5rem)">
                 <h2 class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:var(--c-text4)">Downloads</h2>
+                <!-- Auto-delete watched: TA's global downloads.autodelete_days (a separate form: 0 is refused) -->
+                <form hx-post="/settings/auto-delete"
+                      hx-target="#auto-delete-save-result"
+                      hx-swap="innerHTML"
+                      class="rounded-xl border mb-4 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4"
+                      style="background-color:var(--c-surface);border-color:var(--c-border)">
+                    <div>
+                        <p class="text-sm font-medium" style="color:var(--c-text)">Auto-delete watched videos after N days (blank = off)</p>
+                        <p class="text-xs mt-0.5" style="color:var(--c-text3)">Default for every channel without its own setting, which is set from the channel menu. TubeArchivist deletes after its next download run. Videos marked Keep are never watched, so they stay</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <span id="auto-delete-save-result"></span>
+                        <input type="number" name="days" min="1" value="{{ dl.autodelete_days or '' }}" placeholder="off"
+                               class="text-sm rounded-lg px-3 py-2 border w-28 shrink-0"
+                               style="background-color:var(--c-surface2);color:var(--c-text);border-color:var(--c-border)">
+                        <button type="submit" class="btn-secondary">Save</button>
+                    </div>
+                </form>
+
                 <form hx-post="/settings/downloads"
                       hx-target="#dl-save-result"
                       hx-swap="innerHTML"
@@ -137,17 +156,6 @@
                                 <p class="text-xs mt-0.5" style="color:var(--c-text3)">Fetch and store sponsor segment data with each video</p>
                             </div>
                             {{ toggle("integrate_sponsorblock", dl.integrate_sponsorblock) }}
-                        </div>
-                    </div>
-
-                    <!-- Auto-delete watched -->
-                    <div class="p-4 flex items-center justify-between gap-4">
-                        <div>
-                            <p class="text-sm font-medium" style="color:var(--c-text)">Auto-delete watched</p>
-                            <p class="text-xs mt-0.5" style="color:var(--c-text3)">Delete videos from disk N days after marking watched. Leave blank to keep forever</p>
-                        </div>
-                        <div class="flex items-center gap-2 shrink-0">
-                            {{ num_input("autodelete_days", dl.autodelete_days, "days") }}
                         </div>
                     </div>
 

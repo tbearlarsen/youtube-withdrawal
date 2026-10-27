@@ -7,7 +7,7 @@ from app import app_settings, auto_download as auto_dl, categories
 from app.sorting import DEFAULT_SORT, SORT_OPTIONS, sort_videos
 from app.favorites import is_favorite
 from app.routers.channels import index_limits
-from app import stats, requested as req_tracker, deleted as del_tracker
+from app import stats, requested as req_tracker, deleted as del_tracker, kept
 from app.templating import templates
 
 router = APIRouter()
@@ -31,6 +31,7 @@ async def channel_detail(
         if isinstance(result, BaseException):
             raise result
     limits = None if isinstance(ta_config, BaseException) or not channel_data else index_limits(channel_data, ta_config)
+    ta_autodelete_default = None if isinstance(ta_config, BaseException) else (ta_config.get("downloads") or {}).get("autodelete_days")
     if status == "pending":
         deleted = del_tracker.get_all()
         videos = [v for v in raw_videos if v.get("youtube_id") not in deleted]
@@ -55,6 +56,7 @@ async def channel_detail(
             "is_favorite": is_favorite(channel_id),
             "is_auto_download": auto_dl.is_auto(channel_id),
             "index_limits": limits,
+            "ta_autodelete_default": ta_autodelete_default,
             "categories": categories.get_categories(),
             "sel_channel_id": channel_id,
             "sel_current": categories.category_of(channel_id),
@@ -85,11 +87,11 @@ async def video_detail_page(request: Request, video_id: str):
     })
 
 
-def _detail_actions(request: Request, video: dict, is_queued: bool = False) -> HTMLResponse:
+def _detail_actions(request: Request, video: dict, is_queued: bool = False, source: str = "pending") -> HTMLResponse:
     return templates.TemplateResponse(
         request,
         "partials/video_detail_actions.html",
-        {"video": video, "source": "pending", "is_queued": is_queued},
+        {"video": video, "source": source, "is_queued": is_queued},
     )
 
 
@@ -168,5 +170,40 @@ async def delete_video(request: Request, video_id: str):
     ta = request.app.state.ta
     await ta.delete_video(video_id)
     del_tracker.add(video_id)
+    kept.remove(video_id)
     await ta.force_ignore_video(video_id)
     return HTMLResponse("")
+
+
+async def _set_kept(request: Request, video_id: str, keep: bool, from_: str) -> HTMLResponse:
+    """Keep = protect from TA's auto-delete by keeping the video unwatched (TA only deletes watched ones).
+    The 5-minute loop (main._unwatch_kept) un-watches it again if it gets watched. Unkeep only drops the
+    protection and leaves the watched state alone."""
+    ta = request.app.state.ta
+    if keep:
+        await ta.set_watched(video_id, False)
+        kept.add(video_id)
+    else:
+        kept.remove(video_id)
+    raw = await ta.get_video(video_id) or {}
+    video = raw.get("data") or raw or {"youtube_id": video_id}
+    if keep:
+        # TA's index may not reflect the un-watch yet
+        video = {**video, "player": {**(video.get("player") or {}), "watched": False}}
+    if from_ == "detail":
+        return _detail_actions(request, video, source="downloaded")
+    return templates.TemplateResponse(
+        request,
+        "partials/downloaded_video_card.html",
+        {"video": video, "show_channel": request.query_params.get("show_channel") == "1"},
+    )
+
+
+@router.post("/videos/{video_id}/keep")
+async def keep_video(request: Request, video_id: str, from_: str = Query("", alias="from")):
+    return await _set_kept(request, video_id, True, from_)
+
+
+@router.post("/videos/{video_id}/unkeep")
+async def unkeep_video(request: Request, video_id: str, from_: str = Query("", alias="from")):
+    return await _set_kept(request, video_id, False, from_)

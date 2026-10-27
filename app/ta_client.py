@@ -283,6 +283,10 @@ class TAClient:
         r = await self._client.delete(f"/api/video/{video_id}/")
         r.raise_for_status()
 
+    async def set_watched(self, video_id: str, watched: bool) -> None:
+        r = await self._client.post("/api/watched/", json={"id": video_id, "is_watched": watched})
+        r.raise_for_status()
+
     async def trigger_rescan(self) -> dict:
         r = await self._client.post(
             "/api/appsettings/rescan-filesystem/",

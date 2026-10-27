@@ -163,7 +163,10 @@ document.addEventListener('click', function(e) {
 
                 <div style="height:1px;background:var(--c-border);margin:0 0.75rem"></div>
 
-                <!-- Per-channel auto-delete (TA channel_overwrites.autodelete_days); blank = off -->
+                <!-- Per-channel auto-delete (TA channel_overwrites.autodelete_days); blank = global default.
+                     "Never" is stored as autodelete_never days, since TA has no real never. -->
+                {% set ad_own = (channel.channel_overwrites or {}).get('autodelete_days') %}
+                {% set ad_default = (ta_autodelete_default or 0) %}
                 <form hx-post="/channels/{{ channel.channel_id }}/auto-delete"
                       hx-target="#auto-delete-result"
                       hx-swap="innerHTML"
@@ -172,14 +175,18 @@ document.addEventListener('click', function(e) {
                         Auto-delete watched
                     </p>
                     <label class="flex items-center justify-between" style="font-size:0.72rem;color:var(--c-text2)">
-                        Days after watching
-                        <input type="number" name="days" min="1"
-                               value="{{ (channel.channel_overwrites or {}).get('autodelete_days') or '' }}"
-                               placeholder="off"
-                               class="rounded px-2 py-1 border text-right"
-                               style="width:4.5rem;font-size:0.72rem;background-color:var(--c-surface2);color:var(--c-text);border-color:var(--c-border)">
+                        <span style="white-space:nowrap">Days after</span>
+                        <span class="flex items-center" style="gap:0.3rem">
+                            <input type="text" inputmode="numeric" name="days" id="auto-delete-days" autocomplete="off"
+                                   value="{% if ad_own is not none and ad_own >= autodelete_never %}Never{% elif ad_own %}{{ ad_own }}{% endif %}"
+                                   placeholder="default: {{ ad_default if ad_default else 'off' }}"
+                                   class="rounded px-2 py-1 border text-right"
+                                   style="width:5.5rem;font-size:0.72rem;background-color:var(--c-surface2);color:var(--c-text);border-color:var(--c-border)">
+                            <button type="button" class="btn-secondary" style="padding:0.2rem 0.5rem;font-size:0.65rem"
+                                    onclick="document.getElementById('auto-delete-days').value='Never'">Never</button>
+                        </span>
                     </label>
-                    <p style="font-size:0.6rem;color:var(--c-text4);margin-top:0.2rem">Blank = off · TubeArchivist deletes after its next download run</p>
+                    <p style="font-size:0.6rem;color:var(--c-text4);margin-top:0.2rem">Blank = use global default · TubeArchivist deletes after its next download run</p>
                     <div class="flex items-center justify-between" style="margin-top:0.4rem;gap:0.5rem">
                         <span id="auto-delete-result"></span>
                         <button type="submit" class="btn-secondary" style="padding:0.2rem 0.6rem;font-size:0.65rem">Save</button>

@@ -2,8 +2,8 @@ from datetime import datetime, timezone
 from urllib.parse import urlparse
 
 from fastapi.templating import Jinja2Templates
-from app import app_settings
-from app.config import settings as app_config
+from app import app_settings, kept
+from app.config import AUTODELETE_NEVER, settings as app_config
 
 templates = Jinja2Templates(directory="app/templates")
 
@@ -58,5 +58,7 @@ templates.env.filters["ta_thumb"] = _ta_thumb
 templates.env.filters["format_published"] = _format_published
 templates.env.filters["time_ago"] = _time_ago
 templates.env.globals["app_setting"] = app_settings.get
+templates.env.globals["kept_ids"] = kept.get_all
+templates.env.globals["autodelete_never"] = AUTODELETE_NEVER
 templates.env.globals["watch_url"] = lambda: app_settings.get("watch_url") or ""
 templates.env.globals["ta_url"] = (app_config.ta_public_url or app_config.ta_url).rstrip("/")

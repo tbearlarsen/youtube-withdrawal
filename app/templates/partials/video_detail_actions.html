@@ -9,10 +9,31 @@
                     <span style="width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0"></span>
                     Downloaded
                 </span>
+                {% set is_kept = video.youtube_id in kept_ids() %}
+                {% if is_kept %}
+                <span style="font-size:0.52rem;letter-spacing:0.07em;text-transform:uppercase;font-weight:500;
+                             font-family:system-ui,sans-serif;color:var(--c-accent);
+                             border:1px solid var(--c-accent);padding:0.15rem 0.5rem;border-radius:999px">
+                    Kept
+                </span>
+                {% endif %}
+                <button hx-post="/videos/{{ video.youtube_id }}/{{ 'unkeep' if is_kept else 'keep' }}?from=detail"
+                        hx-target="#vid-actions-{{ video.youtube_id }}"
+                        hx-swap="outerHTML"
+                        title="{{ 'Stop protecting this video from auto-delete' if is_kept else 'Mark unwatched and protect it from auto-delete' }}"
+                        style="margin-left:auto;font-size:0.58rem;letter-spacing:0.07em;text-transform:uppercase;
+                               font-weight:500;font-family:system-ui,sans-serif;cursor:pointer;
+                               padding:0.35rem 0.9rem;border-radius:0.5rem;
+                               border:1px solid var(--c-border);color:var(--c-text3);background:transparent;
+                               transition:border-color 150ms,color 150ms"
+                        onmouseover="this.style.borderColor='var(--c-text3)';this.style.color='var(--c-text)'"
+                        onmouseout="this.style.borderColor='var(--c-border)';this.style.color='var(--c-text3)'">
+                    {{ 'Unkeep' if is_kept else 'Keep' }}
+                </button>
                 <button hx-delete="/videos/{{ video.youtube_id }}"
                         hx-confirm="Delete this video from TubeArchivist?"
                         hx-on::after-request="window.history.back()"
-                        style="margin-left:auto;font-size:0.58rem;letter-spacing:0.07em;text-transform:uppercase;
+                        style="font-size:0.58rem;letter-spacing:0.07em;text-transform:uppercase;
                                font-weight:500;font-family:system-ui,sans-serif;cursor:pointer;
                                padding:0.35rem 0.9rem;border-radius:0.5rem;
                                border:1px solid var(--c-border);color:var(--c-text3);background:transparent;

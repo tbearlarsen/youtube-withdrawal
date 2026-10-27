@@ -160,7 +160,6 @@ async def save_subscription_sizes(
 async def save_downloads(
     request: Request,
     integrate_sponsorblock: str = Form("false"),
-    autodelete_days: str = Form(""),
     subtitle: str = Form(""),
     subtitle_source: str = Form(""),
     subtitle_index: str = Form("false"),
@@ -188,7 +187,6 @@ async def save_downloads(
     payload = {
         "downloads": {
             "integrate_sponsorblock": _bool(integrate_sponsorblock),
-            "autodelete_days": _int(autodelete_days),
             "subtitle": _str(subtitle),
             "subtitle_source": _str(subtitle_source),
             "subtitle_index": _bool(subtitle_index),
@@ -213,6 +211,21 @@ async def save_downloads(
         return HTMLResponse(
             '<span class="text-red-400 text-sm font-medium">Save failed</span>'
         )
+
+
+@router.post("/auto-delete")
+async def save_auto_delete(request: Request, days: str = Form("")):
+    """TA's global downloads.autodelete_days: watched videos of channels without their own overwrite
+    are deleted this many days after watching. Blank = off. 0 would delete on the next run, so it's refused."""
+    raw = days.strip()
+    if raw and (not raw.isdigit() or int(raw) < 1):
+        return HTMLResponse('<span class="text-red-400 text-sm font-medium">Enter 1 or more days, or leave blank</span>')
+    # TA merges a partial downloads dict into its stored config, so only this one key is sent
+    try:
+        await request.app.state.ta.update_ta_config({"downloads": {"autodelete_days": int(raw) if raw else None}})
+    except Exception:
+        return HTMLResponse('<span class="text-red-400 text-sm font-medium">Save failed</span>')
+    return HTMLResponse('<span class="text-green-400 text-sm font-medium">Saved</span>')
 
 
 @router.post("/scan-schedule")

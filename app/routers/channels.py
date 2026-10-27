@@ -6,6 +6,7 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse
 
 from app import auto_download as auto_dl, deleted as del_tracker
+from app.config import AUTODELETE_NEVER
 from app.favorites import toggle_favorite, is_favorite, get_favorites
 from app.templating import templates
 
@@ -363,12 +364,16 @@ async def save_index_limits(
 @router.post("/channels/{channel_id}/auto-delete")
 async def save_auto_delete(request: Request, channel_id: str, days: str = Form("")):
     """TA's own per-channel autodelete_days: TA deletes watched videos this many days after watching.
-    Blank = off (falls back to TA's global setting). TA applies it after each download task, not on a schedule."""
+    Blank = no overwrite (TA's global setting applies). "never" stores AUTODELETE_NEVER, since TA has no
+    real never. TA applies it after each download task, not on a schedule."""
     ta = request.app.state.ta
-    raw = days.strip()
-    if raw and (not raw.isdigit() or int(raw) < 1):
-        return _limit_msg("Enter a whole number of days (1 or more) or leave blank", ok=False)
-    new = int(raw) if raw else None
+    raw = days.strip().lower()
+    if raw == "never":
+        new = AUTODELETE_NEVER
+    elif raw and (not raw.isdigit() or int(raw) < 1):
+        return _limit_msg("Enter a whole number of days (1 or more), \"never\", or leave blank", ok=False)
+    else:
+        new = int(raw) if raw else None
 
     try:
         channel = await ta.get_channel(channel_id)

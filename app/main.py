@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 
-from app import auto_download as auto_dl, requested as req_tracker, deleted as del_tracker, yt_history
+from app import auto_download as auto_dl, requested as req_tracker, deleted as del_tracker, kept, yt_history
 from app.ta_client import TAClient
 from app.routers import categories, channels, videos, queue, home, settings, downloads, pending
 
@@ -33,11 +33,26 @@ async def _reconcile_requested(ta: TAClient) -> None:
                 pass
 
 
+async def _unwatch_kept(ta: TAClient) -> None:
+    """Kept videos are protected from TA's auto-delete by staying unwatched; un-watch any that got watched.
+    Looks up only the kept IDs (not the library). The auto-delete threshold is at least a day, far longer
+    than the 5-minute loop."""
+    for vid_id in kept.get_all():
+        try:
+            # A missing video is skipped, not pruned: a transient 404 must not drop protection
+            raw = await ta.get_video(vid_id) or {}
+            if ((raw.get("data") or raw).get("player") or {}).get("watched"):
+                await ta.set_watched(vid_id, False)
+        except Exception:
+            pass
+
+
 async def _auto_request_loop(app: FastAPI) -> None:
     """Every 5 minutes: reconcile requested tracker, then request pending videos from auto-download channels."""
     while True:
         await asyncio.sleep(5 * 60)
         await _reconcile_requested(app.state.ta)
+        await _unwatch_kept(app.state.ta)
         auto_channels = auto_dl.get_all()
         if not auto_channels:
             continue

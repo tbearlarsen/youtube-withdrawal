@@ -16,4 +16,8 @@ class Settings(BaseSettings):
     model_config = {"env_file": ".env"}
 
 
+# TA has no "never auto-delete" for a channel; an overwrite this large (100 years) does that
+# for a channel whose videos the global autodelete_days would otherwise delete.
+AUTODELETE_NEVER = 36500
+
 settings = Settings()
