@@ -1,5 +1,23 @@
-{# Grouped-by-category sections, every video shown. Expects sections (with anchor). #}
+{# Grouped-by-category sections, every video shown. Expects sections (with anchor).
+   With collapsible set, headers toggle their section; state lives in localStorage by category key. #}
 {% for section in sections %}
+{% if collapsible %}
+<section id="{{ section.anchor }}" class="mb-10" style="scroll-margin-top:7rem">
+    <details class="cat-section" data-cat="{{ section.key }}" open>
+        <summary style="list-style:none;cursor:pointer;display:flex;align-items:center;gap:0.4rem;border-bottom:1px solid var(--c-border);padding-bottom:0.5rem;-webkit-tap-highlight-color:transparent">
+            <svg class="cat-chevron" style="width:12px;height:12px;flex-shrink:0;color:var(--c-text4);transition:transform 150ms" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+            </svg>
+            <h2 style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;font-weight:500;color:var(--c-text2);font-family:system-ui,sans-serif">
+                {{ section.label }}
+                <span style="margin-left:0.4rem;color:var(--c-text4);font-weight:400">{{ section.count }}</span>
+            </h2>
+        </summary>
+        {% set grid_videos = section.videos %}
+        {% include "partials/video_grid.html" %}
+    </details>
+</section>
+{% else %}
 <section id="{{ section.anchor }}" class="mb-10" style="scroll-margin-top:7rem">
     <div class="mb-4" style="border-bottom:1px solid var(--c-border);padding-bottom:0.5rem">
         <h2 style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;font-weight:500;color:var(--c-text2);font-family:system-ui,sans-serif">
@@ -10,4 +28,41 @@
     {% set grid_videos = section.videos %}
     {% include "partials/video_grid.html" %}
 </section>
+{% endif %}
 {% endfor %}
+{% if collapsible and sections %}
+<style>
+    .cat-section > summary::-webkit-details-marker { display: none; }
+    .cat-section[open] > summary { margin-bottom: 1rem; }
+    .cat-section[open] > summary .cat-chevron { transform: rotate(90deg); }
+</style>
+<script>
+(function () {
+    var KEY = 'yt-cat-collapsed:';
+    var sections = document.querySelectorAll('details.cat-section');
+    // Storage can be missing or throw (private mode, blocked data): everything stays expanded
+    function read(name) { try { return localStorage.getItem(KEY + name) === '1'; } catch (e) { return false; } }
+    function write(name, collapsed) {
+        try { if (collapsed) localStorage.setItem(KEY + name, '1'); else localStorage.removeItem(KEY + name); } catch (e) {}
+    }
+    sections.forEach(function (d) {
+        if (read(d.dataset.cat)) d.removeAttribute('open');
+        // Listen on the section, not the cards, so HTMX swaps inside the grid can't lose it
+        d.addEventListener('toggle', function () { write(d.dataset.cat, !d.open); });
+    });
+    // A TOC link to a collapsed category opens it first
+    function reveal() {
+        var el = location.hash && document.querySelector('section' + location.hash + ' > details.cat-section');
+        if (el && !el.open) el.open = true;
+    }
+    reveal();
+    window.addEventListener('hashchange', reveal);
+    document.querySelectorAll('.category-toc nav a').forEach(function (a) {
+        a.addEventListener('click', function () {
+            var el = document.querySelector('section' + a.getAttribute('href').slice(a.getAttribute('href').indexOf('#')) + ' > details.cat-section');
+            if (el) el.open = true;
+        });
+    });
+})();
+</script>
+{% endif %}

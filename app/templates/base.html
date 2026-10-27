@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}YouTube Withdrawal{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/static/htmx.min.js"></script>
 
     <script>
         (function () {
-            var t = localStorage.getItem('yw-theme') || 'system';
+            var t = 'system';
+            try { t = localStorage.getItem('yw-theme') || 'system'; } catch (e) {}
             var resolved = t === 'system'
                 ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
                 : t;

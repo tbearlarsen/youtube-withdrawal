@@ -358,3 +358,29 @@ async def save_index_limits(
     except Exception:
         return _limit_msg("Save failed", ok=False)
     return _limit_msg("Saved — applies on the next scan", ok=True)
+
+
+@router.post("/channels/{channel_id}/auto-delete")
+async def save_auto_delete(request: Request, channel_id: str, days: str = Form("")):
+    """TA's own per-channel autodelete_days: TA deletes watched videos this many days after watching.
+    Blank = off (falls back to TA's global setting). TA applies it after each download task, not on a schedule."""
+    ta = request.app.state.ta
+    raw = days.strip()
+    if raw and (not raw.isdigit() or int(raw) < 1):
+        return _limit_msg("Enter a whole number of days (1 or more) or leave blank", ok=False)
+    new = int(raw) if raw else None
+
+    try:
+        channel = await ta.get_channel(channel_id)
+    except Exception:
+        return _limit_msg("Couldn't reach TubeArchivist", ok=False)
+    if not channel:
+        return _limit_msg("Channel isn't in TubeArchivist yet", ok=False)
+
+    if (channel.get("channel_overwrites") or {}).get("autodelete_days") == new:
+        return _limit_msg("No changes", ok=True)
+    try:
+        await ta.set_channel_overwrites(channel_id, {"autodelete_days": new})
+    except Exception:
+        return _limit_msg("Save failed", ok=False)
+    return _limit_msg("Saved", ok=True)
