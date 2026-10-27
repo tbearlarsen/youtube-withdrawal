@@ -136,6 +136,9 @@ async def restore_video(request: Request, video_id: str, from_: str = Query("", 
     video = await ta.get_download_item(video_id) or {"youtube_id": video_id}
     await ta.restore_video(video_id, auto_start=bool(video.get("auto_start")))
     req_tracker.remove(video_id)
+    # A deleted video stays in deleted.json, which hides it from pending and makes
+    # the reconcile loop re-ignore it, so restoring must clear it there too.
+    del_tracker.remove_many({video_id})
     if from_ == "detail":
         return _detail_actions(request, {**video, "status": "pending"})
     return HTMLResponse("")
