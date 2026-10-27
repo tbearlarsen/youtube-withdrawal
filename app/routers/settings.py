@@ -243,6 +243,18 @@ async def toggle_visibility(key: str = Form(...)):
     """Flip a library visibility toggle (hide watched / hide downloaded) and reload the page."""
     if key in app_settings.VISIBILITY_KEYS:
         app_settings.set(key, not app_settings.get(key))
+    elif key == "hide_watched":
+        # Home's on/off switch: toggles between showing and hiding watched videos
+        hidden = app_settings.get("watched_filter") == "unwatched"
+        app_settings.set("watched_filter", "all" if hidden else "unwatched")
+    return HTMLResponse("", headers={"HX-Refresh": "true"})
+
+
+@router.post("/watched-filter")
+async def set_watched_filter(value: str = Form(...)):
+    """All / Unwatched / Watched on Downloads and channel Downloaded tabs."""
+    if value in app_settings.WATCHED_FILTERS:
+        app_settings.set("watched_filter", value)
     return HTMLResponse("", headers={"HX-Refresh": "true"})
 
 

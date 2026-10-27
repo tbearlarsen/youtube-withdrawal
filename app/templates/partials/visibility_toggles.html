@@ -1,4 +1,5 @@
-{# Library visibility switches. Set show_downloaded_toggle to also offer "Downloaded" (Home only). #}
+{# Library visibility switches. Set show_downloaded_toggle to also offer "Downloaded" (Home only);
+   elsewhere (Downloads, channel Downloaded tab) watched is a three-way All / Unwatched / Watched filter. #}
 {% macro switch(key, label, shown, enabled=true) %}
 <button hx-post="/settings/visibility" hx-vals='{"key": "{{ key }}"}' hx-swap="none"
         {% if enabled %}title="{{ 'Hide' if shown else 'Show' }} {{ label | lower }} videos"{% else %}disabled title="Downloaded videos are hidden"{% endif %}
@@ -15,11 +16,22 @@
 {% endmacro %}
 
 {% set _hide_downloaded = app_setting("hide_downloaded") %}
+{% set _watched_filter = app_setting("watched_filter") %}
 <div class="flex items-center gap-4" style="flex-wrap:wrap">
     {% if show_downloaded_toggle is defined and show_downloaded_toggle %}
     {{ switch("hide_downloaded", "Downloaded", not _hide_downloaded) }}
-    {{ switch("hide_watched", "Watched", not app_setting("hide_watched"), enabled=not _hide_downloaded) }}
+    {{ switch("hide_watched", "Watched", _watched_filter != "unwatched", enabled=not _hide_downloaded) }}
     {% else %}
-    {{ switch("hide_watched", "Watched", not app_setting("hide_watched")) }}
+    <div class="flex items-center" role="group" aria-label="Watched filter"
+         style="border:1px solid var(--c-border);border-radius:999px;padding:0.15rem">
+        {% for value, label in (("all", "All"), ("unwatched", "Unwatched"), ("watched", "Watched")) %}
+        {% set active = _watched_filter == value %}
+        <button hx-post="/settings/watched-filter" hx-vals='{"value": "{{ value }}"}' hx-swap="none"
+                {% if active %}aria-pressed="true"{% endif %}
+                style="background:{{ 'var(--c-surface2)' if active else 'none' }};border:none;border-radius:999px;cursor:pointer;
+                       padding:0.25rem 0.7rem;font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;font-family:system-ui,sans-serif;
+                       color:{{ 'var(--c-text)' if active else 'var(--c-text4)' }}">{{ label }}</button>
+        {% endfor %}
+    </div>
     {% endif %}
 </div>

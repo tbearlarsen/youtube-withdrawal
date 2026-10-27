@@ -66,7 +66,7 @@ async def home_page(request: Request, view: str = "grouped"):
         if vid_id and vid_id not in seen:
             seen.add(vid_id)
             downloaded_videos.append(v)
-    downloaded_videos = app_settings.visible_downloads(downloaded_videos)
+    downloaded_videos = app_settings.visible_downloads(downloaded_videos, only_watched_ok=False)
 
     for v in pending_videos:
         v["_type"] = "pending"
