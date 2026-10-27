@@ -9,7 +9,9 @@ Real, current state of where and how this app runs — confirmed 2026-09-01. Upd
 - **Port mapping:** host `8008` → container `8080`.
 - **Compose:** `/docker/youtube-withdrawal/compose.yaml` on the server — its own stack, not merged into TubeArchivist's compose file (an earlier plan considered merging them; it ended up separate, joining TA's network instead — see `HANDOFF.md`).
 - **Container name:** `youtube-withdrawal`.
-- **Data volume:** `/docker/youtube-withdrawal/data/` (host) → `/app/data` (container) — the seven JSON files described in `CLAUDE.md`'s Canonical Data section. No media stored here.
+- **Data volume:** `/docker/youtube-withdrawal/data/` (host) → `/app/data` (container) — the nine JSON files described in `CLAUDE.md`'s Canonical Data section. No media stored here.
+- **Secrets volume (2026-10-12):** `/docker/youtube-withdrawal/secrets/` (host, `700`) → `/app/secrets`. Holds `youtube-cookies.txt` for the YouTube history sync (`app/yt_history.py`). The feature is off while the file is absent.
+- **ntfy (2026-10-12):** `NTFY_URL`/`NTFY_TOPIC`/`NTFY_TOKEN` in `.env`. Topic `youtube-withdrawal`, published by a write-only ntfy user of the same name. Used for history-sync failure/recovery alerts.
 - **Docker network:** joins `tubearchivist_default` (external network) to reach TubeArchivist by container hostname, with no ports exposed between the two stacks.
 - **Environment variables** (`/docker/youtube-withdrawal/.env` on the server): `TA_API_KEY` (secret), `TA_PUBLIC_URL=http://10.0.0.101:8001` (browser-facing link for the "Open TubeArchivist" button). `TA_URL=http://tubearchivist:8000` is set in the compose file itself (internal Docker network, server-to-server), not `.env`.
 

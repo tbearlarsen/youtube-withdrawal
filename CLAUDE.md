@@ -83,6 +83,18 @@ for it to actually land. Correct course the moment new information contradicts a
 — including this agent's own — rather than defending a position for its own sake. Report what was
 actually found or done, not a summary shaped to sound complete.
 
+**When to stop and when to keep going.** On a multi-part task, keep working through every part
+that doesn't need the user, and put status notes in the same message as the next action. Unwanted
+stops: a summary that announces the next step instead of taking it; an offer to continue when
+nothing waits on the user; a list of non-blocking decisions; stopping because the turn feels long.
+Wanted stops: nothing can move without the user, anything destructive or hard to reverse, writing
+outside this repo, or a genuine design choice the user should weigh in on. Source: Anthropic's
+*Prompting Claude Opus 5.5* guide.
+
+**End a substantial run with what the user needs first:** **Blocked on me**, then **Changed**, then
+**Found**. Mark anything that couldn't be confirmed, and say where you looked. Short answers don't
+need the headings.
+
 **What this deliberately doesn't cover.** Disposition, not procedure — doesn't replace this
 project's own directives/evidence-tagging/session rules, all of which still apply on top of this.
 Not self-enforcing on its own. Doesn't restate Anthropic's own safety/priority hierarchy for Claude
@@ -93,7 +105,7 @@ Full citations, confidence levels per claim, and the reasoning behind each secti
 
 ## Canonical Data
 
-TubeArchivist's own API/database is canonical for all channel, video, and download-queue state — never duplicated locally. The `data/` directory holds seven small JSON files that store *only* what TA's API cannot, each canonical for its own narrow scope (corrected 2026-09-02 — this table previously said "five" and omitted `deleted.json`, caught by directly reading `app/deleted.py` and its callers rather than trusting the prior count; `categories.json` added 2026-10-01):
+TubeArchivist's own API/database is canonical for all channel, video, and download-queue state — never duplicated locally. The `data/` directory holds nine small JSON files that store *only* what TA's API cannot, each canonical for its own narrow scope (corrected 2026-09-02 — this table previously said "five" and omitted `deleted.json`, caught by directly reading `app/deleted.py` and its callers rather than trusting the prior count; `categories.json` added 2026-10-01; `yt_history.json` added 2026-10-12; `kept.json` added 2026-10-27, so now nine):
 
 | File | Canonical for |
 |---|---|
@@ -103,7 +115,11 @@ TubeArchivist's own API/database is canonical for all channel, video, and downlo
 | `deleted.json` | Locally-tracked "you deleted this" video IDs, so a video you deleted doesn't ghost back into the pending view before TA's own index catches up (see `app/deleted.py`; `pending.py` and `videos.py` filter on it) |
 | `auto_download.json` | Which channels have auto-download enabled (TA has no per-channel auto-start API) |
 | `stats.json` | Weekly request counts |
-| `settings.json` | App-level preferences: `watch_url`, plus the library visibility toggles `hide_watched` / `hide_downloaded` (added 2026-10-01) |
+| `settings.json` | App-level preferences: `watch_url`, plus the library visibility settings `watched_filter` (`all`/`unwatched`/`watched`; replaced the boolean `hide_watched` 2026-10-27, which is still read as `unwatched`) and `hide_downloaded` (added 2026-10-01) |
+| `kept.json` | Video IDs the user pressed Keep on (`app/kept.py`, added 2026-10-27). TA's auto-delete only removes *watched* videos, so Keep protects a video by marking it unwatched in TA; TA can't hold the "keep it that way" intent, so the 5-minute loop (`main._unwatch_kept`) re-unwatches any kept video that gets watched. Deleting a video clears it here |
+| `yt_history.json` | Which downloaded videos have already been marked watched in the user's YouTube account, plus the job's pacing/failure state (`app/yt_history.py`, added 2026-10-12). TA can't hold this; it never logs into YouTube |
+
+**YouTube cookie (2026-10-12):** `secrets/youtube-cookies.txt` (gitignored, mounted to `/app/secrets`) is the user's logged-in YouTube cookie, used only by `app/yt_history.py`. The job rewrites it after every run because YouTube rotates session cookies, and does so only while the jar still holds `LOGIN_INFO`. Never move this cookie into TA's `cookie_import`: that would run every TA scan and download as the user's account. The bgutil plugin pin in `requirements.txt` must match the `bgutil-provider` server's major version.
 
 **Why a local requested tracker, not a live TA read:** setting a video's status to `priority` in TubeArchivist writes to Elasticsearch with a short indexing delay — reading the video back immediately can still show the old status. `requested.json` is optimistic UI state, reconciled against TA's actual queue on startup and on queue page loads. Don't "simplify" this into a direct API read; it was built this way after hitting the actual staleness bug.
 

@@ -28,6 +28,27 @@ Deployed and live at `https://withdrawal.sudheim.eu` (confirmed 2026-09-01, see 
 
 **Flat navigation + Categories overview (2026-10-02):** per the user, who found Library → submenu annoying: the Library sidebar is gone and Home · Channels · Categories · Videos · Queue · Downloads · Watch are all top-level tabs. The brand moved from the center to the far left, since seven tabs with a centered brand only fit from about 1270px wide. Below 800px the page tabs move to a bottom bar, now on every page, and Watch stays in the top bar. `/categories` is now a read-only overview: channel cards grouped by category in the user's order, Uncategorized last, with per-category channel and pending counts. The old management screen moved to `/categories/manage`, reached from a Manage button on the overview. `active_section` is gone and nav highlighting uses `active_page` only. Checked with a stubbed TA (all pages 200 with the right tab active, grouping correct) and headless screenshots at 1280px and 390px wide. **Deployed as `ae34736`** by the home-server session: `deploy.sh` rc=0, all 7 `data/*.json` md5-identical to the pre-deploy snapshot. Live checks: all pages 200, no sidebar markup, exactly one active tab per page. `/categories` shows all 14 categories in `categories.json` order, 112 channels in total, none uncategorised. Its pending counts were spot-checked against TA directly and match (e.g. Travel 92, E Manibus 68). The bottom bar under 800px hasn't been seen on a real device.
 
+**Annoyances batch (2026-10-27, deployed as `4f1e907` by home-server-a0; deploy.sh rc=0, only `requested.json` differed from the backup):**
+- **Restore bug fixed (`5b27e1c`).** Single-video restore didn't clear `deleted.json`. A restored video that had once been deleted stayed hidden from pending, and the 5-min reconcile re-ignored it. Restore-all-ignored already cleared it.
+- **Favicon** (`app/static/favicon.svg`): an SVG redraw of the user's crossed-out play button image.
+- **Per-channel auto-delete.** It's in the channel menu and only sets TA's own `channel_overwrites.autodelete_days`, so there's no app-side job. TA v0.5.12 applies it at the end of each download run, not on a timer. Blank sends `null`, which clears it. 0 is rejected because TA would delete on watch.
+- **Collapsible categories on Videos.** Uses `<details>`, with state per browser in localStorage (`yt-cat-collapsed:<key>`).
+- **`watched_filter` replaces `hide_watched`.** It's All/Unwatched/Watched on Downloads and the channel Downloaded tab. Home keeps its on/off switch and never filters to watched-only.
+- Live checks all passed: favicon 200, `cat-section` on /pending, the filter on /downloads, `/auto-delete` on a channel page. None of it has been clicked through live by the user yet.
+- **Deploy routing:** the user wants to pick the session, never Claude (see `directives/deploy.md`). home-server-a0's auto mode blocked `deploy.sh` despite the 2026-10-01 allow rule, so the user had to approve it in manual mode. Why is unconfirmed: the rule may not apply to new sessions.
+
+**Auto-delete on by default + Keep (2026-10-27, deployed as `fa1d632`):**
+- **Live state, set through the app's own endpoints and read back from TA:**
+  - TA global `downloads.autodelete_days` changed from None to 1. A before/after diff of the whole config showed only that key changed, which confirms partial update works on v0.5.12.
+  - Ryan Chapman (`UC6FO-Up1-oLj5nNivCNHL-Q`) is set to Never, stored as 36500. TA synced it into the video docs, which is what its global rule's `must_not exists` checks.
+  - Gone with the Wynns already had its own overwrite, set earlier by the user, so the global rule skips it.
+- **The user accepted the backlog deletion.** About 39 videos already watched over a day earlier get deleted at the next TA download run. They land in TA's ignore list.
+- **Keep:**
+  - Keeping a video sets it unwatched in TA and records it in `data/kept.json`. `main._unwatch_kept` un-watches kept videos again every 5 minutes.
+  - It deliberately doesn't prune IDs that TA 404s, so a transient error can't drop protection.
+  - Un-watching resets TA's resume position. That's from the v0.6.0 source and is unconfirmed on v0.5.12.
+  - The live `/api/watched/` POST hasn't been exercised yet. The user's first Keep click is that test.
+
 **Auto-download icon on channel cards (2026-10-02):** channel cards on Channels and Categories show a green download icon (`--c-queued`) just left of the favorite star when the channel has auto-download on. It replaces the small "AUTO" text at the bottom of the card. It sits in a fixed spot, so it doesn't jump when the star appears on hover. It's display-only on purpose: enabling auto-download stays a deliberate action on the channel page rather than one click on every card, in keeping with the friction-by-design premise. **Deployed as `6e313ba`** (deploy.sh rc=0, data md5-identical): 21 icons on both /channels and /categories, matching the 21 IDs in the live `auto_download.json`, all of them subscribed. No old AUTO badges remain. Placement was checked only in a local headless screenshot, not on the live site.
 
 **Categories in real use (2026-10-01, relayed by the home-server session, counts checked against the live file):** the user categorised all 109 subscribed channels themselves in the app UI into 14 categories, 0 uncategorised. The live `/docker/youtube-withdrawal/data/categories.json` is the record; read it for exact assignments, don't copy them here. How the user thinks about categories, for anyone touching this feature:

@@ -23,7 +23,7 @@ TubeArchivist        ← downloads, stores, indexes
 Your media library   (Jellyfin, Plex, etc.)
 ```
 
-There is no separate database. No duplicate download logic. The seven JSON files in `data/` store only what TA's API cannot — your favorites, channel categories, requested and deleted videos, auto-download settings, stats, and one app preference.
+There is no separate database. No duplicate download logic. The nine JSON files in `data/` store only what TA's API cannot — your favorites, channel categories, requested, deleted and kept videos, auto-download settings, stats, app preferences, and which videos have been marked watched on YouTube.
 
 ---
 
@@ -143,6 +143,7 @@ docker compose up -d --build
 |---|---|---|---|
 | `TA_API_KEY` | Yes | — | TubeArchivist API key. Find it in TubeArchivist → Settings → User. |
 | `TA_URL` | No | `http://tubearchivist:8000` | URL used by the app server to reach TubeArchivist (server-to-server). |
+| `NTFY_URL` / `NTFY_TOPIC` / `NTFY_TOKEN` | No | — | ntfy server, topic and access token for YouTube history sync alerts. Unset = no alerts. |
 | `TA_PUBLIC_URL` | No | same as `TA_URL` | Browser-facing URL for the "Open TubeArchivist" link in Settings. Set this when `TA_URL` is a Docker-internal address (e.g. `http://tubearchivist:8000`) that your browser can't reach. |
 
 ### In-app settings
@@ -247,6 +248,17 @@ The Settings page is a direct interface to TubeArchivist's configuration API. Ch
 
 **Watch link**: optionally adds a **Watch** tab to the navigation bar pointing to any URL — useful for linking directly to your Jellyfin or Plex instance.
 
+### YouTube history sync
+
+Optional. Marks every downloaded video as watched in your own YouTube account, so YouTube's history matches what you've archived. TubeArchivist can't do this. Its cookie setting would also run every scan and download as your account, so the cookie stays in this app instead.
+
+1. In a **private** browser window, log into YouTube, open `https://www.youtube.com/robots.txt`, export the youtube.com cookies in Netscape format, then close the window. YouTube rotates cookies in any session that stays open.
+2. Save the export as `secrets/youtube-cookies.txt` next to `compose.yaml` (the compose file mounts `./secrets` to `/app/secrets`).
+
+New downloads are marked within about 30 minutes. Videos already in the library are backfilled at about one an hour, 08:00–23:00 (Europe/Copenhagen). This uses `yt-dlp --mark-watched` with a PO token from TubeArchivist's `bgutil-provider`. YouTube's refreshed session cookies are written back into the file after each run. Progress and the last error show under **Settings → YouTube History**. Set `NTFY_*` to get a push when it starts failing, for example when the cookie expires. Delete the cookie file to turn the feature off.
+
+YouTube doesn't offer this officially: yt-dlp sends the same playback pings as YouTube's player. yt-dlp's docs warn that automating a logged-in account carries some risk of the account being flagged, so the pacing is deliberately slow.
+
 ---
 
 ## Jellyfin integration
@@ -269,7 +281,7 @@ After that, watch progress updates in Jellyfin will propagate to TubeArchivist a
 
 ## Persistent data
 
-The `data/` volume holds seven small JSON files. They require no migration — missing files are created with safe defaults on first write.
+The `data/` volume holds nine small JSON files. They require no migration — missing files are created with safe defaults on first write.
 
 | File | Contents |
 |---|---|
@@ -277,9 +289,11 @@ The `data/` volume holds seven small JSON files. They require no migration — m
 | `categories.json` | Ordered list of category names and the channel → category assignments |
 | `requested.json` | Set of video IDs you've queued for download |
 | `deleted.json` | Video IDs you've deleted, so they don't reappear as pending before TA's index catches up |
+| `kept.json` | Video IDs you pressed Keep on; they are kept unwatched in TA so its auto-delete leaves them alone |
 | `auto_download.json` | List of channel IDs with auto-download enabled |
 | `stats.json` | Weekly request counts (keyed by ISO week, e.g. `"2025-W24": 12`) |
-| `settings.json` | App-level preferences (`watch_url`, and the `hide_watched` / `hide_downloaded` visibility toggles) |
+| `settings.json` | App-level preferences (`watch_url`, and the `watched_filter` (all/unwatched/watched) and `hide_downloaded` visibility settings) |
+| `yt_history.json` | YouTube history sync: which downloaded videos were already marked watched on YouTube, plus pacing/failure state |
 
 All TubeArchivist configuration (download settings, subscription sizes, scan schedule) lives in TubeArchivist itself and is never duplicated here.
 
