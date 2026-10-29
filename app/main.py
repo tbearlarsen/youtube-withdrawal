@@ -10,12 +10,13 @@ from app.ta_client import TAClient
 from app.routers import categories, channels, videos, queue, home, settings, downloads, pending
 
 
-async def _reconcile_requested(ta: TAClient) -> None:
-    """Remove stale req_tracker entries; re-ignore any deleted videos that reappeared in pending."""
+async def _reconcile_requested(ta: TAClient) -> list[dict] | None:
+    """Remove stale req_tracker entries; re-ignore any deleted videos that reappeared in pending.
+    Returns TA's pending items, or None if they couldn't be fetched."""
     try:
         pending_items = await ta.get_all_pending()
     except Exception:
-        return
+        return None
 
     pending_ids = {v["youtube_id"] for v in pending_items}
 
@@ -29,6 +30,27 @@ async def _reconcile_requested(ta: TAClient) -> None:
         if vid_id and vid_id in deleted:
             try:
                 await ta.ignore_video(vid_id)
+            except Exception:
+                pass
+    return pending_items
+
+
+async def _kick_requested(ta: TAClient, pending_items: list[dict]) -> None:
+    """Re-send every request still waiting in TA's queue, so none sits there until the next one.
+
+    TA starts its downloader only when a request comes in, and drops that start if a download run
+    is already going. A request made during a run's final post-processing step is never picked up,
+    and one made just as the run empties can even lose its auto_start flag. With
+    subscriptions.auto_start off and no download_pending schedule, nothing else restarts it.
+    Re-requesting is harmless while a run is going: TA drops the extra start and the run picks the
+    video up anyway. Items with a TA error message failed to download and are left alone, so a
+    broken video isn't retried every 5 minutes."""
+    requested = req_tracker.get_all() - del_tracker.get_all()
+    for item in pending_items:
+        vid_id = item.get("youtube_id")
+        if vid_id in requested and not item.get("message"):
+            try:
+                await ta.request_video(vid_id)
             except Exception:
                 pass
 
@@ -51,7 +73,9 @@ async def _auto_request_loop(app: FastAPI) -> None:
     """Every 5 minutes: reconcile requested tracker, then request pending videos from auto-download channels."""
     while True:
         await asyncio.sleep(5 * 60)
-        await _reconcile_requested(app.state.ta)
+        pending_items = await _reconcile_requested(app.state.ta)
+        if pending_items is not None:
+            await _kick_requested(app.state.ta, pending_items)
         await _unwatch_kept(app.state.ta)
         auto_channels = auto_dl.get_all()
         if not auto_channels:
